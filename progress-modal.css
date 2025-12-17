@@ -1,0 +1,115 @@
+/* ========================================
+   PROGRESS MODAL STYLES
+   ======================================== */
+
+.progress-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.progress-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+.progress-card {
+    position: relative;
+    z-index: 1;
+    background: var(--surface);
+    border-radius: var(--radius-xl);
+    padding: 3rem 2.5rem;
+    box-shadow: var(--shadow-xl);
+    border: 1px solid var(--border);
+    max-width: 400px;
+    width: 90%;
+    text-align: center;
+    animation: scaleIn 0.3s ease-out;
+}
+
+@keyframes scaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.progress-ring-container {
+    position: relative;
+    width: 140px;
+    height: 140px;
+    margin: 0 auto 2rem;
+}
+
+.progress-ring {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+}
+
+.progress-ring-bg {
+    fill: none;
+    stroke: var(--border-light);
+    stroke-width: 8;
+}
+
+.progress-ring-fill {
+    fill: none;
+    stroke: var(--primary);
+    stroke-width: 8;
+    stroke-linecap: round;
+    stroke-dasharray: 339.292;
+    /* 2 * PI * 54 */
+    stroke-dashoffset: 339.292;
+    transition: stroke-dashoffset 0.3s ease;
+}
+
+.progress-percentage {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.progress-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.75rem;
+}
+
+.progress-status {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+/* Dark mode adjustments */
+body.dark-mode .progress-overlay {
+    background: rgba(0, 0, 0, 0.7);
+}
+
+body.dark-mode .progress-card {
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8);
+}

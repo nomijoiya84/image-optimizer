@@ -1,0 +1,189 @@
+/* ===== PREMIUM ANIMATIONS & MICRO-INTERACTIONS ===== */
+
+/* Smooth Page Load */
+@keyframes pageEntrance {
+    from {
+        opacity: 0;
+        filter: blur(10px);
+    }
+
+    to {
+        opacity: 1;
+        filter: blur(0);
+    }
+}
+
+body {
+    animation: pageEntrance 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+/* Staggered Content Entrance */
+@keyframes staggerFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.upload-container {
+    animation: staggerFadeIn 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) 0.1s backwards;
+}
+
+.controls-panel {
+    animation: staggerFadeIn 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) 0.2s backwards;
+}
+
+/* Card Entrance with Stagger */
+@keyframes cardEntrance {
+    from {
+        opacity: 0;
+        transform: translateY(40px) scale(0.9);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.result-card {
+    animation: cardEntrance 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    animation-fill-mode: backwards;
+}
+
+.result-card:nth-child(1) {
+    animation-delay: 0.1s;
+}
+
+.result-card:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.result-card:nth-child(3) {
+    animation-delay: 0.3s;
+}
+
+.result-card:nth-child(4) {
+    animation-delay: 0.4s;
+}
+
+.result-card:nth-child(5) {
+    animation-delay: 0.5s;
+}
+
+.result-card:nth-child(6) {
+    animation-delay: 0.6s;
+}
+
+/* Stats Counter Animation */
+@keyframes countUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.stat-value {
+    animation: countUp 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Badge Shimmer Effect */
+@keyframes shimmer {
+    0% {
+        background-position: -200% center;
+    }
+
+    100% {
+        background-position: 200% center;
+    }
+}
+
+.compression-badge {
+    background-size: 200% auto;
+    animation: shimmer 3s linear infinite;
+    background-image: linear-gradient(90deg,
+            rgba(16, 185, 129, 0.1) 0%,
+            rgba(16, 185, 129, 0.2) 50%,
+            rgba(16, 185, 129, 0.1) 100%);
+}
+
+/* Success Notification */
+@keyframes successPop {
+    0% {
+        opacity: 0;
+        transform: scale(0.5) translateY(-20px);
+    }
+
+    50% {
+        transform: scale(1.1) translateY(0);
+    }
+
+    100% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.success-notification {
+    animation: successPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Logo Animation */
+@keyframes logoFloat {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-3px);
+    }
+}
+
+.logo:hover .logo-icon-wrapper {
+    animation: logoFloat 2s ease-in-out infinite;
+}
+
+/* Loading Spinner Enhancement */
+@keyframes spinGlow {
+    0% {
+        transform: rotate(0deg);
+        filter: drop-shadow(0 0 2px var(--primary));
+    }
+
+    50% {
+        filter: drop-shadow(0 0 8px var(--primary));
+    }
+
+    100% {
+        transform: rotate(360deg);
+        filter: drop-shadow(0 0 2px var(--primary));
+    }
+}
+
+.loading {
+    animation: spinGlow 1.5s linear infinite;
+}
+
+/* Removed conflicting hover effects that are now handled in styles.css */

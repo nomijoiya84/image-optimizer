@@ -1,0 +1,26 @@
+// Global variables
+let uploadedFiles = [];
+let optimizedImages = [];
+let optimizedPreviews = [];
+let isOptimizing = false;
+let batchGridVisible = false;
+
+// DOM elements
+let uploadArea, fileInput, controlsSection, resultsSection;
+let qualitySlider, qualityValue, maxWidth, widthValue;
+let maxHeight, heightValue, formatSelect, optimizeBtn;
+let targetSizeToggle, targetSizeInput, targetSizeValue, targetSizeWrapper;
+let batchTools, batchCountEl, batchSavingsEl, batchGridToggle;
+let batchGridWrapper, batchGrid, downloadAllBtn;
+let themeToggle;
+let formatRecommendationText;
+let formatWarningText;
+
+const FORMAT_DEFINITIONS = {
+    auto: { label: 'Auto (Smart)', mime: '', extension: '' },
+    jpeg: { label: 'JPEG', mime: 'image/jpeg', extension: 'jpg', supportsAlpha: false },
+    png: { label: 'PNG', mime: 'image/png', extension: 'png', supportsAlpha: true, lossless: true },
+    webp: { label: 'WebP', mime: 'image/webp', extension: 'webp', supportsAlpha: true, supportsAnimation: true },
+    avif: { label: 'AVIF', mime: 'image/avif', extension: 'avif', supportsAlpha: true, supportsAnimation: true },
+    jxl: { label: 'JPEG XL', mime: 'image/jxl', extension: 'jxl', supportsAlpha: true }
+};
