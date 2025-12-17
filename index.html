@@ -38,6 +38,8 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="animations-enhancement.css">
     <link rel="stylesheet" href="hero-styles.css">
+    <link rel="stylesheet" href="progress-modal.css">
+    <link rel="stylesheet" href="success-modal.css">
 
     <!-- JSON-LD Structured Data -->
     <script type="application/ld+json">
@@ -251,13 +253,40 @@
     <div class="success-modal" id="successModal" style="display:none;">
         <div class="success-overlay"></div>
         <div class="success-card">
+            <div class="success-icon-wrapper">
+                <svg class="success-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+            </div>
             <h3 class="success-title">Optimization Complete!</h3>
-            <p>Original Size: <span id="successStatsOriginal"></span></p>
-            <p>Optimized Size: <span id="successStatsOptimized"></span></p>
-            <p>Saved: <span id="successStatsSaved"></span></p>
-            <p id="successCountText"></p>
-            <button class="btn btn-primary" id="successDownloadBtn">Download All</button>
-            <button class="btn btn-secondary" id="successCloseBtn">Close</button>
+            <p class="success-subtitle" id="successCountText">Successfully optimized your images!</p>
+
+            <div class="success-stats">
+                <div class="stat-box">
+                    <span class="stat-label">Original</span>
+                    <span class="stat-value" id="successStatsOriginal">0 KB</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">Optimized</span>
+                    <span class="stat-value highlight" id="successStatsOptimized">0 KB</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">Saved</span>
+                    <span class="stat-value" id="successStatsSaved">0 KB</span>
+                </div>
+            </div>
+
+            <div class="success-actions">
+                <button class="btn btn-primary" id="successDownloadBtn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                    Download All (ZIP)
+                </button>
+                <button class="btn btn-secondary-outline" id="successCloseBtn">Close</button>
+            </div>
         </div>
     </div>
 

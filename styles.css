@@ -177,6 +177,12 @@ body.dark-mode .bg-mesh-item {
     align-items: center;
 }
 
+@media (max-width: 480px) {
+    .header-content {
+        padding: 0 1rem;
+    }
+}
+
 .logo {
     display: flex;
     align-items: center;
@@ -227,6 +233,12 @@ body.dark-mode .main-header h1 {
 .tagline {
     font-size: 0.9rem;
     color: var(--text-secondary);
+}
+
+@media (max-width: 480px) {
+    .tagline {
+        font-size: 0.8rem;
+    }
 }
 
 /* Applied Glass Styles - Replaces 'composes: glass-panel' */
@@ -541,6 +553,8 @@ body.dark-mode .download-btn {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    /* Extra safety for long filenames */
+    overflow-wrap: break-word;
 }
 
 .image-preview {
@@ -622,11 +636,12 @@ body.light-mode .stats {
 /* Responsive */
 @media (max-width: 768px) {
     .hero-title {
-        font-size: 2.5rem;
+        font-size: 2.25rem;
     }
 
     .main-content {
         padding: 1rem;
+        gap: 2rem;
     }
 
     .controls-panel {
@@ -634,34 +649,38 @@ body.light-mode .stats {
     }
 
     .results-container {
-        grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+        grid-template-columns: 1fr;
     }
 }
 
 @media (max-width: 480px) {
     .hero-title {
-        font-size: 2rem;
+        font-size: 1.75rem;
     }
 
-
     .upload-area {
-        padding: 2.5rem 1.5rem;
+        padding: 2.5rem 1rem;
     }
 
     .upload-title {
-        font-size: 1.5rem;
+        font-size: 1.35rem;
+    }
+
+    .upload-icon-wrapper {
+        width: 60px;
+        height: 60px;
+        margin-bottom: 1rem;
     }
 
     .controls-panel {
-        padding: 1.25rem;
+        padding: 1rem;
     }
 
     .controls-grid {
         grid-template-columns: 1fr;
-        gap: 2rem;
+        gap: 1.5rem;
     }
 
-    /* Improve touch targets */
     .slider::-webkit-slider-thumb {
         width: 28px;
         height: 28px;
@@ -672,33 +691,64 @@ body.light-mode .stats {
         height: 28px;
     }
 
-    .results-container {
-        grid-template-columns: 1fr;
-    }
-
     .btn-optimize {
         width: 100%;
         min-width: unset;
         font-size: 1rem;
-        padding: 1rem 1.5rem;
+        padding: 1rem;
     }
 
     .stats {
         grid-template-columns: 1fr;
-        gap: 0.75rem;
+        gap: 0.5rem;
+        padding: 0.75rem;
     }
 
-    /* Mobile Comparison Styles */
+    .stat-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.25rem 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    body.light-mode .stat-item {
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .stat-item:last-child {
+        border-bottom: none;
+    }
+
+    .stat-label {
+        margin-bottom: 0;
+    }
+
     .comparison-handle {
-        width: 40px;
-        height: 40px;
-        margin-left: -20px;
-        /* Center with larger width */
+        width: 44px;
+        height: 44px;
+        margin-left: -22px;
+        margin-top: -22px;
     }
 
     .comparison-handle-icon {
         width: 4px;
         height: 20px;
+    }
+
+    .comparison-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .zoom-toggle-btn {
+        padding: 0.5rem;
+        font-size: 0;
+        /* Hide text, show icon only on narrow screens */
+    }
+
+    .zoom-toggle-btn svg {
+        margin: 0;
     }
 }
 
