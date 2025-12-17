@@ -72,6 +72,8 @@ body.dark-mode {
     --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
     --bg-secondary: rgba(255, 255, 255, 0.05);
     --border-light: rgba(255, 255, 255, 0.1);
+    --surface: var(--glass-bg);
+    --border: var(--glass-border);
 }
 
 body {
@@ -478,6 +480,18 @@ body.light-mode .select-input option {
     background: rgba(255, 255, 255, 0.15);
 }
 
+.btn-outline {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+}
+
+.btn-outline:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: rgba(16, 185, 129, 0.05);
+}
+
 body.light-mode .btn-secondary {
     background: rgba(255, 255, 255, 0.8);
     border: 1px solid #e2e8f0;
@@ -601,6 +615,57 @@ body.light-mode .stats {
     background: rgba(16, 185, 129, 0.1);
     color: var(--primary);
     border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.result-card.is-processing {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.result-card.is-processing::after {
+    content: "Processing...";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--primary-gradient);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 99px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    animation: pulse-mini 1.5s infinite ease-in-out;
+    z-index: 10;
+}
+
+@keyframes pulse-mini {
+
+    0%,
+    100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+
+    50% {
+        transform: translate(-50%, -50%) scale(1.05);
+        opacity: 0.8;
+    }
+}
+
+.result-card.has-failed {
+    border-color: var(--error);
+    background: rgba(239, 68, 68, 0.05);
+}
+
+.failed-badge {
+    background: var(--error);
+    color: white;
+    text-align: center;
+    padding: 0.5rem;
+    border-radius: var(--radius-sm);
+    font-weight: 700;
+    margin-top: 1rem;
 }
 
 .card-remove-btn {

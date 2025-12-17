@@ -4,6 +4,7 @@ let optimizedImages = [];
 let optimizedPreviews = [];
 let isOptimizing = false;
 let batchGridVisible = false;
+const revocableUrls = new Set();
 
 // DOM elements
 let uploadArea, fileInput, controlsSection, resultsSection;
@@ -75,7 +76,7 @@ document.addEventListener('DOMContentLoaded', function () {
         !targetSizeToggle || !targetSizeInput || !targetSizeValue || !targetSizeWrapper ||
         !batchTools || !batchCountEl || !batchSavingsEl || !batchGridToggle ||
         !batchGridWrapper || !batchGrid || !downloadAllBtn || !themeToggle) {
-        console.error('Some DOM elements are missing!');
+        Toast.error('Critical UI elements are missing. The app may not function correctly.', 'Initialization Error');
         return;
     }
 
@@ -116,7 +117,29 @@ document.addEventListener('DOMContentLoaded', function () {
     const savedTheme = localStorage.getItem('theme') || 'light';
     applyTheme(savedTheme);
     console.log('Image Optimizer initialized successfully!');
+
+    // Register Service Worker
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js')
+                .then(reg => console.log('Service Worker registered', reg))
+                .catch(err => console.error('Service Worker registration failed', err));
+        });
+    }
 });
+
+function safeRevokeUrl(url) {
+    if (url && url.startsWith('blob:') && revocableUrls.has(url)) {
+        URL.revokeObjectURL(url);
+        revocableUrls.delete(url);
+    }
+}
+
+function createPointerUrl(blob) {
+    const url = URL.createObjectURL(blob);
+    revocableUrls.add(url);
+    return url;
+}
 
 // Drag and drop handlers
 function handleDragOver(e) {
@@ -132,6 +155,10 @@ function handleDragLeave(e) {
 function handleDrop(e) {
     e.preventDefault();
     uploadArea.classList.remove('dragover');
+    if (isOptimizing) {
+        Toast.warning('Please wait for current optimization to complete.', 'Optimization in Progress');
+        return;
+    }
     const files = Array.from(e.dataTransfer.files).filter(file => file.type.startsWith('image/'));
     if (files.length > 0) {
         processFiles(files, false);
@@ -139,6 +166,11 @@ function handleDrop(e) {
 }
 
 function handleFileSelect(e) {
+    if (isOptimizing) {
+        Toast.warning('Please wait for current optimization to complete.', 'Optimization in Progress');
+        e.target.value = '';
+        return;
+    }
     const files = Array.from(e.target.files).filter(file => file.type.startsWith('image/'));
     if (files.length > 0) {
         processFiles(files, false);
@@ -147,13 +179,13 @@ function handleFileSelect(e) {
 }
 
 function processFiles(files, replaceExisting = false) {
-    uploadedFiles = replaceExisting ? [...files] : [...uploadedFiles, ...files];
-    optimizedImages = new Array(uploadedFiles.length);
-    optimizedPreviews = new Array(uploadedFiles.length);
     if (replaceExisting) {
+        revocableUrls.forEach(url => safeRevokeUrl(url));
+        uploadedFiles = [...files];
         imageFeatureCache = new Array(uploadedFiles.length);
         motionDetectionCache = new Map();
     } else {
+        uploadedFiles = [...uploadedFiles, ...files];
         imageFeatureCache = [...imageFeatureCache, ...new Array(files.length)];
     }
     resetBatchUI();
@@ -166,18 +198,13 @@ function displayUploadedFiles() {
     if (!resultsSection) return;
     resultsSection.innerHTML = '';
 
-    uploadedFiles.forEach((file) => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const liveIndex = getCurrentFileIndex(file);
-            if (liveIndex === -1) {
-                return;
-            }
-            const card = createImageCard(file, e.target.result, liveIndex, false);
-            resultsSection.appendChild(card);
-            collectFormatInsight(file, e.target.result);
-        };
-        reader.readAsDataURL(file);
+    uploadedFiles.forEach((file, index) => {
+        // Reuse existing preview URL if found in DOM or just create one
+        // Better: just always create one but clear results section properly
+        const objectUrl = createPointerUrl(file);
+        const card = createImageCard(file, objectUrl, index, false);
+        resultsSection.appendChild(card);
+        collectFormatInsight(file, objectUrl);
     });
 }
 
@@ -199,7 +226,7 @@ function handleResultsSectionClick(event) {
 
 function removeImage(index) {
     if (isOptimizing) {
-        alert('Please wait for the current optimization to finish before removing images.');
+        Toast.warning('Please wait for the current optimization to finish before removing images.', 'Action Blocked');
         return;
     }
     if (index < 0 || index >= uploadedFiles.length) return;
@@ -212,6 +239,9 @@ function removeImage(index) {
 
     const card = resultsSection ? resultsSection.querySelector(`.result-card[data-index="${index}"]`) : null;
     if (card) {
+        // Clean up URLs from the card
+        const images = card.querySelectorAll('img');
+        images.forEach(img => safeRevokeUrl(img.src));
         card.remove();
     }
 
@@ -635,69 +665,103 @@ function optimizeImages() {
     }
     optimizeBtn.disabled = true;
 
+    const filesToProcess = [...uploadedFiles];
+    const totalFiles = filesToProcess.length;
     let processedCount = 0;
-    const totalFiles = uploadedFiles.length;
 
-    const finalizeIfComplete = () => {
-        updateProgress(processedCount, totalFiles);
+    // Reset results for these files
+    optimizedImages = new Array(totalFiles);
+    optimizedPreviews = new Array(totalFiles);
 
-        if (processedCount === totalFiles) {
+    // Generate placeholders first to maintain order in UI
+    filesToProcess.forEach((file, index) => {
+        const objectUrl = createPointerUrl(file);
+        const card = createImageCard(file, objectUrl, index, false);
+        card.classList.add('is-processing');
+        resultsSection.appendChild(card);
+    });
+
+    showProgressModal();
+
+    // Process sequentially to prevent UI freezing and memory spikes
+    executeSequentialOptimization(filesToProcess, useTargetSize, targetSizeBytes, maxW, maxH, selectedFormat, processedCount, totalFiles)
+        .then(() => {
             isOptimizing = false;
             hideProgressModal();
+            enableOptimizeButton();
+            showSuccessSummary(filesToProcess);
+        });
+}
 
-            const btnTextNode = optimizeBtn.querySelector('.btn-text');
-            if (btnTextNode) {
-                btnTextNode.textContent = 'Optimize Images';
+async function executeSequentialOptimization(files, useTargetSize, targetSizeBytes, maxW, maxH, selectedFormat, processedCount, totalFiles) {
+    for (let index = 0; index < files.length; index++) {
+        const file = files[index];
+        // Check if existing preview URL from the placeholder card
+        const card = resultsSection.querySelector(`.result-card[data-index="${index}"]`);
+        const placeholderImg = card?.querySelector('img');
+        const objectUrl = placeholderImg?.src || createPointerUrl(file);
+
+        try {
+            const img = await loadImage(objectUrl);
+            const features = await ensureImageFeatures(index, file, img);
+            const targetFormat = resolveOutputFormat(selectedFormat, features);
+
+            if (useTargetSize && targetSizeBytes) {
+                await optimizeToTargetSize(img, file, objectUrl, index, targetSizeBytes, maxW, maxH, targetFormat);
             } else {
-                optimizeBtn.textContent = 'Optimize Images';
+                await optimizeWithSettings(img, file, objectUrl, index, qualitySlider.value / 100, maxW, maxH, targetFormat);
             }
-            optimizeBtn.disabled = false;
-
-            // Calculate stats and show success modal
-            const originalTotal = uploadedFiles.reduce((acc, file) => acc + file.size, 0);
-            const optimizedTotal = optimizedImages.reduce((acc, file) => acc + (file ? file.size : 0), 0);
-            const count = optimizedImages.filter(Boolean).length;
-
-            if (count > 0 && typeof showSuccessModal === 'function') {
-                showSuccessModal({
-                    originalTotal,
-                    optimizedTotal,
-                    count
-                });
-            }
+        } catch (error) {
+            console.error(`Optimization failed for ${file?.name || 'image'}`, error);
+            Toast.error(`Optimization failed for ${file?.name || 'this image'}.`, 'Optimization Error');
+            updateCardToFailed(index, file);
+        } finally {
+            processedCount++;
+            updateProgress(processedCount + 1, totalFiles); // +1 because we updated after processing? No, standard 0-based.
+            // updateProgress implementation usually takes (current, total). 
+            // Original code: processedCount initialized 0. In callback: processedCount++, then updateProgress(processedCount, totalFiles).
+            // So if 1 file, processedCount becomes 1. updateProgress(1, 1). Correct.
+            // Here: index 0. processedCount (passed in) is 0? 
+            // processedCount is a primitive passed by value? No, it's a variable in closure? 
+            // I can't pass 'processedCount' primitive and expect it to update outside logic if I needed it. 
+            // But I am rewriting the loop logic here so I can just manage a local counter.
+            // Or better, just use index+1.
+            updateProgress(index + 1, totalFiles);
         }
-    };
+    }
+}
 
-    uploadedFiles.forEach((file, index) => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const img = new Image();
-            img.onload = async () => {
-                try {
-                    const features = await ensureImageFeatures(index, file, img);
-                    const targetFormat = resolveOutputFormat(selectedFormat, features);
-                    if (useTargetSize && targetSizeBytes) {
-                        await optimizeToTargetSize(img, file, e.target.result, index, targetSizeBytes, maxW, maxH, targetFormat);
-                    } else {
-                        await optimizeWithSettings(img, file, e.target.result, index, quality, maxW, maxH, targetFormat);
-                    }
-                } catch (error) {
-                    console.error(`Optimization failed for ${file?.name || 'image'}`, error);
-                    alert(`Unable to optimize ${file?.name || 'this image'}. Try changing settings or formats.`);
-                } finally {
-                    processedCount++;
-                    finalizeIfComplete();
-                }
-            };
-            img.onerror = () => {
-                console.error(`Failed to process ${file?.name || 'image'} for optimization.`);
-                processedCount++;
-                finalizeIfComplete();
-            };
-            img.src = e.target.result;
-        };
-        reader.readAsDataURL(file);
+function loadImage(src) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = () => reject(new Error('Image load error'));
+        img.src = src;
     });
+}
+
+function enableOptimizeButton() {
+    const btnTextNode = optimizeBtn.querySelector('.btn-text');
+    if (btnTextNode) {
+        btnTextNode.textContent = 'Optimize Images';
+    } else {
+        optimizeBtn.textContent = 'Optimize Images';
+    }
+    optimizeBtn.disabled = false;
+}
+
+function showSuccessSummary(filesToProcess) {
+    const originalTotal = filesToProcess.reduce((acc, file) => acc + file.size, 0);
+    const optimizedTotal = optimizedImages.reduce((acc, file) => acc + (file ? file.size : 0), 0);
+    const count = optimizedImages.filter(Boolean).length;
+
+    if (count > 0 && typeof showSuccessModal === 'function') {
+        showSuccessModal({
+            originalTotal,
+            optimizedTotal,
+            count
+        });
+    }
 }
 
 async function optimizeWithSettings(img, file, originalSrc, index, quality, maxW, maxH, format) {
@@ -722,15 +786,15 @@ async function optimizeWithSettings(img, file, originalSrc, index, quality, maxW
     if (!encodeResult) {
         throw new Error('Unable to encode image with available formats.');
     }
-    const { blob, dataUrl, formatUsed } = encodeResult;
+    const { blob, url, formatUsed } = encodeResult;
     const mimeType = getMimeTypeForFormat(formatUsed);
     const optimizedFile = new File([blob], getOptimizedFileName(file.name, formatUsed), { type: mimeType });
 
-    storeOptimizedResult(index, optimizedFile, dataUrl);
+    storeOptimizedResult(index, optimizedFile, url);
 
-    // Display optimized image with comparison
-    const card = createImageCard(file, dataUrl, index, true, originalSrc);
-    resultsSection.appendChild(card);
+    // Update existing card slot
+    const newCard = createImageCard(file, url, index, true, originalSrc);
+    replaceCardAtIndex(index, newCard);
 }
 
 async function optimizeToTargetSize(img, file, originalSrc, index, targetSizeBytes, maxW, maxH, format) {
@@ -754,27 +818,41 @@ async function optimizeToTargetSize(img, file, originalSrc, index, targetSizeByt
     const maxIterations = 30;
 
     let closestBlob = null;
-    let closestDataUrl = null;
+    let closestUrl = null;
     let closestDiff = Infinity;
 
-    const recordCandidate = (blob, dataUrl) => {
+    const recordCandidate = (blob, url) => {
         const diff = Math.abs(blob.size - targetSizeBytes);
         const isUnder = blob.size <= targetSizeBytes;
         const currentIsUnder = closestBlob ? closestBlob.size <= targetSizeBytes : false;
 
+        let isBetter = false;
+
         // Prefer result that is under the limit, otherwise closest
         if (isUnder && !currentIsUnder) {
-            closestDiff = diff;
-            closestBlob = blob;
-            closestDataUrl = dataUrl;
+            isBetter = true;
         } else if (isUnder === currentIsUnder && diff < closestDiff) {
-            closestDiff = diff;
-            closestBlob = blob;
-            closestDataUrl = dataUrl;
+            isBetter = true;
         } else if (!closestBlob) {
-            closestBlob = blob;
-            closestDataUrl = dataUrl;
+            isBetter = true;
+        }
+
+        if (isBetter) {
+            // Revoke the previous closest URL to prevent memory leaks
+            if (closestUrl && closestUrl !== url) {
+                safeRevokeUrl(closestUrl);
+            }
             closestDiff = diff;
+            closestBlob = blob;
+            closestUrl = url;
+        } else if (url !== closestUrl) {
+            // New candidate is not better, so we don't keep it.
+            // The caller (main loop) manages currentUrl and might reuse it for next iteration 
+            // or switch it. But 'recordCandidate' is called right after generation.
+            // If it's not chosen as closest, it remains 'currentUrl' in the loop.
+            // The loop checks "if (currentUrl !== closestUrl) safeRevokeUrl(currentUrl)" 
+            // which handles cleaning up the losers.
+            // So we don't need to do anything here for the loser.
         }
     };
 
@@ -792,19 +870,19 @@ async function optimizeToTargetSize(img, file, originalSrc, index, targetSizeByt
             throw new Error('Failed to encode image while targeting file size.');
         }
         activeFormat = encodeResult.formatUsed;
-        return { blob: encodeResult.blob, dataUrl: encodeResult.dataUrl };
+        return { blob: encodeResult.blob, url: encodeResult.url };
     };
 
     // Initial measurement
-    let { blob: currentBlob, dataUrl: currentDataUrl } = await drawAndMeasure(currentWidth, currentHeight, currentQuality);
-    recordCandidate(currentBlob, currentDataUrl);
+    let { blob: currentBlob, url: currentUrl } = await drawAndMeasure(currentWidth, currentHeight, currentQuality);
+    recordCandidate(currentBlob, currentUrl);
 
     let iterations = 0;
     while (iterations < maxIterations) {
         // Check if we are close enough
         if (Math.abs(currentBlob.size - targetSizeBytes) / targetSizeBytes <= tolerance) {
             closestBlob = currentBlob;
-            closestDataUrl = currentDataUrl;
+            closestUrl = currentUrl;
             break;
         }
 
@@ -890,27 +968,55 @@ async function optimizeToTargetSize(img, file, originalSrc, index, targetSizeByt
             currentHeight = nextHeight;
         }
 
-        ({ blob: currentBlob, dataUrl: currentDataUrl } = await drawAndMeasure(currentWidth, currentHeight, currentQuality));
-        recordCandidate(currentBlob, currentDataUrl);
+        if (currentUrl !== closestUrl) {
+            safeRevokeUrl(currentUrl);
+        }
+        ({ blob: currentBlob, url: currentUrl } = await drawAndMeasure(currentWidth, currentHeight, currentQuality));
+        recordCandidate(currentBlob, currentUrl);
         iterations++;
     }
 
     const finalBlob = closestBlob || currentBlob;
-    const finalDataUrl = closestDataUrl || currentDataUrl;
+    const finalUrl = closestUrl || currentUrl;
 
     const finalFormat = activeFormat;
     const mimeType = getMimeTypeForFormat(finalFormat);
     const optimizedFile = new File([finalBlob], getOptimizedFileName(file.name, finalFormat), { type: mimeType });
-    storeOptimizedResult(index, optimizedFile, finalDataUrl);
+    storeOptimizedResult(index, optimizedFile, finalUrl);
 
-    const card = createImageCard(file, finalDataUrl, index, true, originalSrc);
-    resultsSection.appendChild(card);
+    const newCard = createImageCard(file, finalUrl, index, true, originalSrc);
+    replaceCardAtIndex(index, newCard);
 }
 
-function storeOptimizedResult(index, optimizedFile, previewDataUrl) {
+function replaceCardAtIndex(index, newCard) {
+    if (!resultsSection) return;
+    const oldCard = resultsSection.querySelector(`.result-card[data-index="${index}"]`);
+    if (oldCard) {
+        // Clean up old URLs
+        const images = oldCard.querySelectorAll('img');
+        images.forEach(img => safeRevokeUrl(img.src));
+        resultsSection.replaceChild(newCard, oldCard);
+    } else {
+        resultsSection.appendChild(newCard);
+    }
+}
+
+function updateCardToFailed(index, file) {
+    const card = resultsSection ? resultsSection.querySelector(`.result-card[data-index="${index}"]`) : null;
+    if (card) {
+        card.classList.remove('is-processing');
+        card.classList.add('has-failed');
+        const statusEl = document.createElement('div');
+        statusEl.className = 'failed-badge';
+        statusEl.textContent = 'Optimization Failed';
+        card.appendChild(statusEl);
+    }
+}
+
+function storeOptimizedResult(index, optimizedFile, previewUrl) {
     optimizedImages[index] = optimizedFile;
     optimizedPreviews[index] = {
-        dataUrl: previewDataUrl,
+        url: previewUrl,
         originalName: uploadedFiles[index]?.name || optimizedFile.name
     };
     updateBatchUI();
@@ -943,7 +1049,7 @@ function renderBatchGrid() {
     const items = optimizedImages.map((file, index) => {
         if (!file) return '';
         const previewData = optimizedPreviews[index];
-        const previewSrc = previewData?.dataUrl || '';
+        const previewSrc = previewData?.url || '';
         const originalFile = uploadedFiles[index];
         const originalSize = originalFile?.size || 0;
         const sizeLabel = originalSize > 0 ? ` • ${getCompressionLabel(originalSize, file.size)}` : '';
@@ -972,7 +1078,7 @@ function handleDownloadAllClick() {
     downloadAllAsZip()
         .catch((error) => {
             console.error('Failed to create ZIP:', error);
-            alert('Unable to prepare the ZIP file. Please try again.');
+            Toast.error('Unable to prepare the ZIP file. Please try again.', 'ZIP Error');
         })
         .finally(() => {
             setDownloadAllButtonLoading(false);
@@ -1450,12 +1556,27 @@ async function tryEncodeCanvas(canvas, format, quality) {
         if (format === 'avif' || format === 'jxl') {
             return await encodeWithWasm(canvas, format, quality);
         }
-        const dataUrl = canvas.toDataURL(definition.mime, quality);
-        if (!dataUrl || !dataUrl.startsWith(`data:${definition.mime}`)) {
-            return null;
-        }
-        const blob = dataURLtoBlob(dataUrl);
-        return { blob, dataUrl, formatUsed: format };
+
+        return new Promise((resolve) => {
+            canvas.toBlob((blob) => {
+                if (!blob) {
+                    resolve(null);
+                    return;
+                }
+                // Check if the browser actually returned the requested format
+                // Browser might fallback to PNG if format is unsupported
+                if (blob.type !== definition.mime && format !== 'jpeg' && format !== 'png') {
+                    // If we asked for webp but got png, browser doesn't support it natively
+                    resolve(null);
+                    return;
+                }
+                resolve({
+                    blob,
+                    url: createPointerUrl(blob),
+                    formatUsed: format
+                });
+            }, definition.mime, quality);
+        });
     } catch (error) {
         return null;
     }
@@ -1487,8 +1608,7 @@ async function encodeWithWasm(canvas, format, quality) {
     const encodedBuffer = await encodeFn(imageData, options);
     const mimeType = getMimeTypeForFormat(format);
     const blob = new Blob([encodedBuffer], { type: mimeType });
-    const dataUrl = await blobToDataURL(blob);
-    return { blob, dataUrl, formatUsed: format };
+    return { blob, url: createPointerUrl(blob), formatUsed: format };
 }
 
 async function loadWasmCodec(format) {
