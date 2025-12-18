@@ -2,6 +2,7 @@
 let uploadedFiles = [];
 let optimizedImages = [];
 let optimizedPreviews = [];
+let fileSettings = []; // Track per-file settings like format
 let isOptimizing = false;
 let batchGridVisible = false;
 const revocableUrls = new Set();
@@ -182,10 +183,13 @@ function processFiles(files, replaceExisting = false) {
     if (replaceExisting) {
         revocableUrls.forEach(url => safeRevokeUrl(url));
         uploadedFiles = [...files];
+        fileSettings = new Array(uploadedFiles.length).fill().map(() => ({ format: 'global' }));
         imageFeatureCache = new Array(uploadedFiles.length);
         motionDetectionCache = new Map();
     } else {
         uploadedFiles = [...uploadedFiles, ...files];
+        const newSettings = new Array(files.length).fill().map(() => ({ format: 'global' }));
+        fileSettings = [...fileSettings, ...newSettings];
         imageFeatureCache = [...imageFeatureCache, ...new Array(files.length)];
     }
     resetBatchUI();
@@ -234,6 +238,7 @@ function removeImage(index) {
     uploadedFiles.splice(index, 1);
     optimizedImages.splice(index, 1);
     optimizedPreviews.splice(index, 1);
+    fileSettings.splice(index, 1);
     imageFeatureCache.splice(index, 1);
     pruneMotionDetectionCache();
 
@@ -362,12 +367,23 @@ function createImageCard(file, imageSrc, index, isOptimized, originalSrc = null)
         card.innerHTML = `
             ${removeButtonMarkup}
             <h3>${fileName}</h3>
-            <img src="${imageSrc}" alt="${escapeHTML(file.name)}" class="image-preview">
+            <img src="${imageSrc}" alt="${escapeHTML(file.name)}" class="image-preview" loading="lazy">
             <div class="stats">
                 <div class="stat-item">
                     <div class="stat-label">Size</div>
                     <div class="stat-value">${fileSize}</div>
                 </div>
+            </div>
+            <div class="card-control-item" style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+                <label style="font-size: 0.85em; font-weight: 500; color: var(--text-secondary);">Format:</label>
+                <select onchange="window.updateFileFormat(${index}, this.value)" class="card-format-select">
+                    <option value="global" ${fileSettings[index]?.format === 'global' ? 'selected' : ''}>Global (Default)</option>
+                    <option value="jpeg" ${fileSettings[index]?.format === 'jpeg' ? 'selected' : ''}>JPEG</option>
+                    <option value="png" ${fileSettings[index]?.format === 'png' ? 'selected' : ''}>PNG</option>
+                    <option value="webp" ${fileSettings[index]?.format === 'webp' ? 'selected' : ''}>WebP</option>
+                    <option value="avif" ${fileSettings[index]?.format === 'avif' ? 'selected' : ''}>AVIF</option>
+                    <option value="jxl" ${fileSettings[index]?.format === 'jxl' ? 'selected' : ''}>JPEG XL</option>
+                </select>
             </div>
         `;
     }
@@ -597,9 +613,9 @@ function buildComparisonMarkup(file, originalSrc, optimizedSrc, index) {
                 </div>
             </div>
             <div class="comparison-stage" data-zoom-source="optimized">
-                <img src="${originalSrc}" alt="${safeOriginalAlt}" class="comparison-image comparison-image--before" draggable="false">
+                <img src="${originalSrc}" alt="${safeOriginalAlt}" class="comparison-image comparison-image--before" draggable="false" loading="lazy">
                 <div class="comparison-after-layer" style="clip-path: inset(0 50% 0 0); -webkit-clip-path: inset(0 50% 0 0);">
-                    <img src="${optimizedSrc}" alt="${safeOptimizedAlt}" class="comparison-image comparison-image--after" draggable="false">
+                    <img src="${optimizedSrc}" alt="${safeOptimizedAlt}" class="comparison-image comparison-image--after" draggable="false" loading="lazy">
                 </div>
                 <button class="comparison-handle" type="button" role="slider" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50" aria-label="Drag to compare">
                     <span class="comparison-handle-icon"></span>
@@ -682,6 +698,7 @@ function optimizeImages() {
     });
 
     showProgressModal();
+    updateProgress(0, totalFiles);
 
     // Process sequentially to prevent UI freezing and memory spikes
     executeSequentialOptimization(filesToProcess, useTargetSize, targetSizeBytes, maxW, maxH, selectedFormat, processedCount, totalFiles)
@@ -704,7 +721,11 @@ async function executeSequentialOptimization(files, useTargetSize, targetSizeByt
         try {
             const img = await loadImage(objectUrl);
             const features = await ensureImageFeatures(index, file, img);
-            const targetFormat = resolveOutputFormat(selectedFormat, features);
+
+            // Determine format: check per-file setting, fallback to global
+            const fileFormat = fileSettings[index]?.format || 'global';
+            const effectiveFormat = fileFormat === 'global' ? selectedFormat : fileFormat;
+            const targetFormat = resolveOutputFormat(effectiveFormat, features);
 
             if (useTargetSize && targetSizeBytes) {
                 await optimizeToTargetSize(img, file, objectUrl, index, targetSizeBytes, maxW, maxH, targetFormat);
@@ -1006,9 +1027,22 @@ function updateCardToFailed(index, file) {
     if (card) {
         card.classList.remove('is-processing');
         card.classList.add('has-failed');
+
+        const existingBadge = card.querySelector('.failed-badge');
+        if (existingBadge) existingBadge.remove();
+
         const statusEl = document.createElement('div');
         statusEl.className = 'failed-badge';
-        statusEl.textContent = 'Optimization Failed';
+        statusEl.innerHTML = `
+            <span>Optimization Failed</span>
+            <button class="retry-btn" onclick="retryOptimization(${index})" title="Retry" style="background: none; border: none; color: inherit; cursor: pointer; padding: 0 4px; vertical-align: middle;">
+                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+                    <path d="M23 4v6h-6"></path>
+                    <path d="M1 20v-6h6"></path>
+                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 1 8.49 15"></path>
+                </svg>
+            </button>
+        `;
         card.appendChild(statusEl);
     }
 }
@@ -1623,6 +1657,7 @@ async function loadWasmCodec(format) {
             })
             .catch((error) => {
                 console.error(`Failed to load ${format.toUpperCase()} encoder`, error);
+                delete wasmCodecCache[format];
                 return null;
             });
     }
@@ -1656,4 +1691,62 @@ function clampQuality(value) {
     return Math.min(1, Math.max(0.05, value));
 }
 
+window.retryOptimization = async function (index) {
+    if (isOptimizing) {
+        Toast.warning('Please wait for current optimization to complete.');
+        return;
+    }
 
+    if (index < 0 || index >= uploadedFiles.length) return;
+    const file = uploadedFiles[index];
+    if (!file) return;
+
+    const card = resultsSection ? resultsSection.querySelector(`.result-card[data-index="${index}"]`) : null;
+    if (card) {
+        card.classList.remove('has-failed');
+        card.classList.add('is-processing');
+        const badge = card.querySelector('.failed-badge');
+        if (badge) badge.remove();
+    }
+
+    const useTargetSize = targetSizeToggle.checked;
+    let targetSizeKB = useTargetSize ? parseFloat(targetSizeInput.value) : null;
+    if (useTargetSize && (isNaN(targetSizeKB) || targetSizeKB <= 0)) targetSizeKB = 100;
+    const targetSizeBytes = targetSizeKB ? targetSizeKB * 1024 : null;
+
+    const quality = qualitySlider.value / 100;
+    const maxW = parseInt(maxWidth.value, 10);
+    const maxH = parseInt(maxHeight.value, 10);
+    const selectedFormat = formatSelect.value;
+
+    try {
+        const placeholderImg = card?.querySelector('.image-preview') || card?.querySelector('img');
+        const objectUrl = placeholderImg?.src || createPointerUrl(file);
+
+        const img = await loadImage(objectUrl);
+        const features = await ensureImageFeatures(index, file, img);
+        const targetFormat = resolveOutputFormat(selectedFormat, features);
+
+        if (useTargetSize && targetSizeBytes) {
+            await optimizeToTargetSize(img, file, objectUrl, index, targetSizeBytes, maxW, maxH, targetFormat);
+        } else {
+            await optimizeWithSettings(img, file, objectUrl, index, quality, maxW, maxH, targetFormat);
+        }
+
+        Toast.success(`Retried ${file.name} successfully.`);
+
+    } catch (error) {
+        console.error('Retry failed', error);
+        Toast.error('Retry failed.');
+        updateCardToFailed(index, file);
+    }
+};
+
+
+
+// Global function for per-file format updates
+window.updateFileFormat = function (index, value) {
+    if (fileSettings[index]) {
+        fileSettings[index].format = value;
+    }
+};

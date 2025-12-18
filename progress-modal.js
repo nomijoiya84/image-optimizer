@@ -27,12 +27,10 @@ function updateProgress(current, total) {
     progressPercentage.textContent = percentage + '%';
 
     // Update status text
-    if (current === 0) {
-        progressStatus.textContent = 'Preparing...';
-    } else if (current < total) {
-        progressStatus.textContent = `Optimizing image ${current} of ${total}...`;
-    } else {
+    if (current >= total) {
         progressStatus.textContent = 'Complete!';
+    } else {
+        progressStatus.textContent = `Optimizing image ${current + 1} of ${total}...`;
     }
 
     // Animate SVG ring

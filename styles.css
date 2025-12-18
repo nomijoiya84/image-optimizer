@@ -918,3 +918,28 @@ body.light-mode .stats {
     width: 14px;
     height: 14px;
 }
+
+/* Card Format Selection */
+.card-format-select {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-sm);
+    padding: 6px 12px;
+    font-size: 0.85rem;
+    outline: none;
+    width: auto;
+    min-width: 130px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.card-format-select:hover {
+    border-color: var(--primary);
+    background: var(--glass-highlight);
+}
+
+.card-format-select option {
+    background: var(--bg-color);
+    color: var(--text-primary);
+}

@@ -22,7 +22,7 @@ A beautiful, modern web application for optimizing images locally in your browse
    ```bash
    python server.py
    ```
-3. The page will automatically open in your browser at `http://localhost:8000`
+3. The page will automatically open in your browser at `http://localhost:8080`
 
 ### Option 2: Using Node.js
 
@@ -32,9 +32,9 @@ A beautiful, modern web application for optimizing images locally in your browse
    ```
 2. Run:
    ```bash
-   http-server -p 8000
+   http-server -p 8080
    ```
-3. Open `http://localhost:8000` in your browser
+3. Open `http://localhost:8080` in your browser
 
 ### Option 3: Direct File Opening
 

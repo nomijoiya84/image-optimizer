@@ -1,4 +1,4 @@
-const CACHE_NAME = 'image-optimizer-v2';
+const CACHE_NAME = 'image-optimizer-v3';
 const ASSETS_TO_CACHE = [
     './',
     './index.html',

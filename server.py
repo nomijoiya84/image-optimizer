@@ -45,16 +45,30 @@ def main():
         sys.exit(1)
     
     # Check if port is already in use
-    if is_port_in_use(PORT):
-        logger.warning(f"Port {PORT} is already in use. Attempting to use a different port...")
-        # In a real app we might try PORT+1, but for now we'll just note it.
+    # Check if port is already in use and find an available one
+    # Check if port is already in use and find an available one
+    port = PORT
+    attempt = 0
+    max_attempts = 10
+    while attempt < max_attempts:
+        if is_port_in_use(port):
+            logger.warning(f"Port {port} is already in use. Trying next port...")
+            port += 1
+            attempt += 1
+        else:
+            break
+    
+    if attempt == max_attempts:
+        logger.error(f"Could not find an available port after {max_attempts} attempts.")
+        sys.exit(1)
     
     # Allow address reuse to prevent "Address already in use" errors on restart
     socketserver.TCPServer.allow_reuse_address = True
     
     try:
-        with socketserver.TCPServer(("", PORT), MyHTTPRequestHandler) as httpd:
-            url = f"http://localhost:{PORT}/"
+        # Use the possibly updated PORT
+        with socketserver.TCPServer(("", port), MyHTTPRequestHandler) as httpd:
+            url = f"http://localhost:{port}/"
             logger.info("=========================================")
             logger.info(f"Image Optimizer Server Started")
             logger.info(f"URL: {url}")
