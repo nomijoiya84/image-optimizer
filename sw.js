@@ -1,4 +1,4 @@
-const CACHE_NAME = 'image-optimizer-v18';
+const CACHE_NAME = 'image-optimizer-v19';
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
@@ -24,6 +24,7 @@ const ASSETS_TO_CACHE = [
     './js/vendor/jsquash-avif/codec/enc/avif_enc.wasm',
     './js/vendor/jsquash-avif/codec/enc/avif_enc_mt.js',
     './js/vendor/jsquash-avif/codec/enc/avif_enc_mt.wasm',
+    './js/vendor/jsquash-avif/codec/enc/avif_enc_mt.worker.mjs',
 
     './js/vendor/jsquash-jxl/encode.js',
     './js/vendor/jsquash-jxl/meta.js',
@@ -32,8 +33,10 @@ const ASSETS_TO_CACHE = [
     './js/vendor/jsquash-jxl/codec/enc/jxl_enc.wasm',
     './js/vendor/jsquash-jxl/codec/enc/jxl_enc_mt.js',
     './js/vendor/jsquash-jxl/codec/enc/jxl_enc_mt.wasm',
+    './js/vendor/jsquash-jxl/codec/enc/jxl_enc_mt.worker.js',
     './js/vendor/jsquash-jxl/codec/enc/jxl_enc_mt_simd.js',
     './js/vendor/jsquash-jxl/codec/enc/jxl_enc_mt_simd.wasm',
+    './js/vendor/jsquash-jxl/codec/enc/jxl_enc_mt_simd.worker.js',
 
     './js/vendor/wasm-feature-detect/dist/esm/index.js',
 

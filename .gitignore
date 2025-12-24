@@ -11,3 +11,4 @@ dist/
 *.tmp
 *.backup
 test_import.html
+!js/vendor/**/dist/
