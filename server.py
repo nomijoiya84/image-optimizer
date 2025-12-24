@@ -17,13 +17,28 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+import mimetypes
+
+# Ensure explicit MIME types are registered
+mimetypes.init()
+mimetypes.add_type('application/wasm', '.wasm')
+mimetypes.add_type('application/javascript', '.js')
+mimetypes.add_type('application/javascript', '.mjs')
+mimetypes.add_type('text/css', '.css')
+
 PORT = 8080
 
 class MyHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
     def end_headers(self):
-        self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
-        self.send_header('Pragma', 'no-cache')
-        self.send_header('Expires', '0')
+        # Cache WASM files for 1 hour - they're large and rarely change
+        if self.path.endswith('.wasm'):
+            self.send_header('Cache-Control', 'public, max-age=3600')
+        else:
+            # DISABLE CACHING for other files intentionally for development
+            self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
+            self.send_header('Pragma', 'no-cache')
+            self.send_header('Expires', '0')
+            
         # Headers required for SharedArrayBuffer (needed for WASM image encoders)
         self.send_header('Cross-Origin-Opener-Policy', 'same-origin')
         self.send_header('Cross-Origin-Embedder-Policy', 'require-corp')
@@ -44,8 +59,6 @@ def main():
         logger.error(f"Failed to change directory: {e}")
         sys.exit(1)
     
-    # Check if port is already in use
-    # Check if port is already in use and find an available one
     # Check if port is already in use and find an available one
     port = PORT
     attempt = 0
@@ -77,12 +90,12 @@ def main():
             logger.info("Press Ctrl+C to stop the server")
             
             # Try to open browser automatically
-            try:
-                logger.info("Opening browser...")
-                if not webbrowser.open(url):
-                    logger.warning("Could not open browser automatically. Please open the URL manually.")
-            except Exception as e:
-                logger.error(f"Error opening browser: {e}")
+            # try:
+            #     logger.info("Opening browser...")
+            #     if not webbrowser.open(url):
+            #         logger.warning("Could not open browser automatically. Please open the URL manually.")
+            # except Exception as e:
+            #     logger.error(f"Error opening browser: {e}")
             
             try:
                 httpd.serve_forever()

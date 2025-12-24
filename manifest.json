@@ -1,0 +1,49 @@
+{
+    "name": "Image Optimizer - Free Online Image Compressor",
+    "short_name": "Image Optimizer",
+    "description": "The ultimate browser-based image optimizer. Compress JPG, PNG, WebP & more instantly. 100% Free, Unlimited & Private—images never leave your device.",
+    "start_url": "./",
+    "scope": "./",
+    "display": "standalone",
+    "background_color": "#0a0f1a",
+    "theme_color": "#10b981",
+    "orientation": "any",
+    "categories": [
+        "utilities",
+        "photo",
+        "productivity"
+    ],
+    "icons": [
+        {
+            "src": "assets/logo.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "assets/app_logo.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ],
+    "screenshots": [
+        {
+            "src": "assets/hero-graphic.png",
+            "sizes": "1280x720",
+            "type": "image/png",
+            "form_factor": "wide",
+            "label": "Image Optimizer Homepage"
+        }
+    ],
+    "shortcuts": [
+        {
+            "name": "Optimize Images",
+            "short_name": "Optimize",
+            "description": "Start optimizing your images",
+            "url": "./"
+        }
+    ],
+    "lang": "en",
+    "dir": "ltr"
+}

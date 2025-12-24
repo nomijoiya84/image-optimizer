@@ -48,3 +48,8 @@ function hideProgressModal() {
         document.body.classList.remove('no-scroll');
     }, 500); // Small delay to show 100% completion
 }
+
+// Export functions to window for access from ES modules
+window.showProgressModal = showProgressModal;
+window.updateProgress = updateProgress;
+window.hideProgressModal = hideProgressModal;

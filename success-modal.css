@@ -127,6 +127,18 @@
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
+    position: relative;
+}
+
+.stat-box:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    right: -0.5rem;
+    top: 15%;
+    bottom: 15%;
+    width: 1px;
+    background: var(--border-light);
+    opacity: 0.5;
 }
 
 .stat-label {

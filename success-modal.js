@@ -4,6 +4,24 @@ let successStatsOriginal, successStatsOptimized, successStatsSaved;
 let successCountText;
 let successDownloadBtn, successCloseBtn;
 
+// Local helper that uses window.formatFileSize if available, or falls back to own impl
+function formatFileSizeLocal(bytes) {
+    // Use global if available (exported from main.js)
+    if (typeof window.formatFileSize === 'function') {
+        return window.formatFileSize(bytes);
+    }
+    // Fallback implementation
+    if (bytes === 0) return '0 Bytes';
+    const sign = bytes < 0 ? -1 : 1;
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const absoluteBytes = Math.abs(bytes);
+    const i = Math.floor(Math.log(absoluteBytes) / Math.log(k));
+    const value = Math.round(absoluteBytes / Math.pow(k, i) * 100) / 100;
+    const formatted = value + ' ' + sizes[i];
+    return sign < 0 ? `-${formatted}` : formatted;
+}
+
 document.addEventListener('DOMContentLoaded', function () {
     successModal = document.getElementById('successModal');
     successStatsOriginal = document.getElementById('successStatsOriginal');
@@ -19,19 +37,26 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (successDownloadBtn) {
         successDownloadBtn.addEventListener('click', () => {
-            if (typeof handleDownloadAllClick === 'function') {
-                handleDownloadAllClick();
+            // Check on window object since this is set by ES modules
+            if (typeof window.handleDownloadAllClick === 'function') {
+                window.handleDownloadAllClick();
+            } else if (typeof window.downloadAll === 'function') {
+                window.downloadAll();
             }
         });
     }
 });
 
+// Export to window for access from ES modules
+window.showSuccessModal = showSuccessModal;
+window.hideSuccessModal = hideSuccessModal;
+
 function showSuccessModal(stats) {
     if (!successModal) return;
 
     // Update stats
-    if (successStatsOriginal) successStatsOriginal.textContent = formatFileSize(stats.originalTotal);
-    if (successStatsOptimized) successStatsOptimized.textContent = formatFileSize(stats.optimizedTotal);
+    if (successStatsOriginal) successStatsOriginal.textContent = formatFileSizeLocal(stats.originalTotal);
+    if (successStatsOptimized) successStatsOptimized.textContent = formatFileSizeLocal(stats.optimizedTotal);
 
     if (successStatsSaved) {
         const savedBytes = stats.originalTotal - stats.optimizedTotal;
@@ -41,10 +66,10 @@ function showSuccessModal(stats) {
 
         // Handle case where file size increased
         if (savedBytes < 0) {
-            successStatsSaved.textContent = `+${formatFileSize(Math.abs(savedBytes))}`;
+            successStatsSaved.textContent = `+${formatFileSizeLocal(Math.abs(savedBytes))}`;
             successStatsSaved.style.color = 'var(--error)'; // Or a warning color
         } else {
-            successStatsSaved.textContent = `${formatFileSize(savedBytes)} (-${savedPercent}%)`;
+            successStatsSaved.textContent = `${formatFileSizeLocal(savedBytes)} (-${savedPercent}%)`;
             successStatsSaved.style.color = 'var(--primary)';
         }
     }

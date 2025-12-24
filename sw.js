@@ -1,9 +1,21 @@
-const CACHE_NAME = 'image-optimizer-v3';
+const CACHE_NAME = 'image-optimizer-v13';
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
+    './manifest.json',
     './styles.css',
-    './script.js',
+    './js/main.js',
+    './js/dom.js',
+    './js/state.js',
+    './js/constants.js',
+    './js/utils.js',
+    './js/formats.js',
+    './js/optimize.js',
+    './js/ui.js',
+    './js/upload.js',
+    './js/comparison.js',
+    './js/worker-fast.js',
+    // worker.js removed (deprecated)
     './animations-enhancement.css',
     './hero-styles.css',
     './progress-modal.css',
