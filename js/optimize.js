@@ -163,7 +163,7 @@ export async function optimizeToTargetSize(file, originalUrl, index, targetSize,
     // img argument is unused now as we pass 'file' to worker
     try {
         const result = await processInWorker('optimizeToTargetSize', file, { targetSize, maxW, maxH, format });
-        finalizeOptimization(index, file, originalUrl, result);
+        finalizeOptimization(index, file, originalUrl, result, format);
     } catch (error) {
         console.error('Worker optimization failed:', error);
         throw error;
@@ -176,7 +176,7 @@ export async function optimizeToTargetSize(file, originalUrl, index, targetSize,
 export async function optimizeWithSettings(file, originalUrl, index, quality, maxW, maxH, format) {
     try {
         const result = await processInWorker('optimizeWithSettings', file, { quality, maxW, maxH, format });
-        finalizeOptimization(index, file, originalUrl, result);
+        finalizeOptimization(index, file, originalUrl, result, format);
     } catch (error) {
         console.error('Worker optimization failed:', error);
         throw error;
@@ -186,7 +186,7 @@ export async function optimizeWithSettings(file, originalUrl, index, quality, ma
 /**
  * Shared finalization logic
  */
-function finalizeOptimization(index, file, originalUrl, result) {
+function finalizeOptimization(index, file, originalUrl, result, requestedFormat = null) {
     // LOGIC ERROR FIX: If the file was removed while we were working, discard result
     if (!uploadedFiles[index] || uploadedFiles[index] !== file) {
         console.log(`Optimization finished for index ${index} but file was removed. Discarding.`);
@@ -195,6 +195,11 @@ function finalizeOptimization(index, file, originalUrl, result) {
 
     if (optimizedPreviews[index]) {
         safeRevokeUrl(optimizedPreviews[index]);
+    }
+
+    // Check for format fallback
+    if (requestedFormat && result.formatUsed !== requestedFormat && window.notifyFormatFallback) {
+        window.notifyFormatFallback(requestedFormat, result.formatUsed);
     }
 
     const mainBlob = result.blob;

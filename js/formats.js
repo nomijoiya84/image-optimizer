@@ -233,11 +233,20 @@ export async function detectImageFeatures(img, file) {
 /**
  * Resolve the final output format based on selection and features
  */
-export function resolveOutputFormat(selectedFormat, features) {
+export function resolveOutputFormat(selectedFormat, features, fileType) {
     if (selectedFormat !== 'auto') {
         return ensureFormatSupported(selectedFormat);
     }
-    return features ? features.recommendation : 'jpeg';
+    if (features) {
+        return features.recommendation;
+    }
+    // Fallback if feature detection isn't ready:
+    // If original file is PNG (likely has alpha), stay safe with PNG.
+    // Otherwise default to JPEG.
+    if (fileType && (fileType.includes('png') || fileType.includes('gif'))) {
+        return 'png';
+    }
+    return 'jpeg';
 }
 
 /**

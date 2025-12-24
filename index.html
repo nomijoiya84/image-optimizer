@@ -115,9 +115,13 @@
         </header>
         <section class="hero">
             <div class="hero-content">
-                <h2 class="hero-title">Smart Image Compression. Zero Quality Loss.</h2>
-                <p class="hero-subtitle">Reduce file size by up to 90% instantly. 100% Free, Private, and runs entirely
-                    in your browser.</p>
+                <h2 class="hero-title">Private, Fast, In-Browser Image Compression — No Uploads, Ever</h2>
+                <p class="hero-subtitle">Optimize JPG, PNG, WebP, and AVIF directly in your browser. Your files never
+                    leave your device — perfect for developers, designers, and privacy-focused creators.</p>
+                <div class="hero-actions">
+                    <a href="#uploadArea" class="btn btn-primary btn-hero">Optimize an Image</a>
+                    <p class="hero-secondary-text">Free • Secure • Works Offline After Load</p>
+                </div>
                 <div class="hero-visual">
                     <img src="assets/hero-graphic.png" alt="Futuristic Image Optimization" class="hero-img">
                 </div>
@@ -125,63 +129,58 @@
         </section>
 
         <!-- Benefits Section -->
+        <!-- Benefits Section -->
         <section class="benefits-section">
             <div class="benefits-header fade-in-up">
-                <h2>Why Choose Image Optimizer?</h2>
-                <p>The smartest way to compress your images without losing quality</p>
+                <h2>Why use this instead of other image compressors?</h2>
+                <p>Most “online optimizers” upload your files to a server. Ours runs 100% locally in your browser —
+                    meaning:</p>
             </div>
-            <div class="benefits-grid">
+            <div class="benefits-grid benefits-grid-4">
                 <div class="benefit-card fade-in-up stagger-1">
                     <div class="benefit-icon">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
                         </svg>
                     </div>
-                    <h3>100% Private & Secure</h3>
-                    <p>Your images never leave your device. All processing happens right in your browser—zero uploads,
-                        zero tracking.</p>
+                    <h3>Zero data sharing</h3>
                 </div>
                 <div class="benefit-card fade-in-up stagger-2">
+                    <div class="benefit-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
+                            <line x1="12" y1="2" x2="12" y2="12"></line>
+                        </svg>
+                    </div>
+                    <h3>No bandwidth used</h3>
+                </div>
+                <div class="benefit-card fade-in-up stagger-3">
                     <div class="benefit-icon">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
                         </svg>
                     </div>
-                    <h3>Lightning Fast</h3>
-                    <p>Powered by Web Workers and WASM codecs for parallel processing. Optimize multiple images in
-                        seconds.</p>
+                    <h3>Instant processing</h3>
                 </div>
-                <div class="benefit-card fade-in-up stagger-3">
+                <div class="benefit-card fade-in-up stagger-4">
                     <div class="benefit-icon">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
-                            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                         </svg>
                     </div>
-                    <h3>Smart Recommendations</h3>
-                    <p>AI-powered format suggestions based on your image type. Get the best compression for photos,
-                        graphics, and more.</p>
+                    <h3>Enterprise-safe for confidential images</h3>
                 </div>
             </div>
-            <div class="audience-section fade-in-up">
-                <h3>Perfect For</h3>
-                <div class="audience-tags">
-                    <span class="audience-tag">📸 Photographers</span>
-                    <span class="audience-tag">💻 Web Developers</span>
-                    <span class="audience-tag">✍️ Content Creators</span>
-                    <span class="audience-tag">🛒 E-commerce Sellers</span>
-                    <span class="audience-tag">📱 Social Media Managers</span>
-                    <span class="audience-tag">🎨 Designers</span>
-                </div>
+            <div class="benefits-footer fade-in-up">
+                <p class="privacy-statement">This isn’t marketing — it’s real privacy by design.</p>
             </div>
         </section>
 
         <!-- Demo Section -->
         <section class="demo-section">
             <div class="demo-header fade-in-up">
-                <h2>See How Easy It Is</h2>
-                <p>Optimize your images in just 3 simple steps</p>
+                <h2>How It Works (Simple Steps)</h2>
             </div>
             <div class="demo-showcase fade-in-up">
                 <div class="demo-steps">
@@ -194,8 +193,7 @@
                                 <line x1="12" y1="3" x2="12" y2="15"></line>
                             </svg>
                         </div>
-                        <h4>Upload Images</h4>
-                        <p>Drag & drop or click to select your images</p>
+                        <h4>Upload or drag an image</h4>
                     </div>
                     <div class="demo-step">
                         <span class="step-number">2</span>
@@ -207,8 +205,7 @@
                                 </path>
                             </svg>
                         </div>
-                        <h4>Adjust Settings</h4>
-                        <p>Choose quality, size, and format options</p>
+                        <h4>Choose quality/size settings</h4>
                     </div>
                     <div class="demo-step">
                         <span class="step-number">3</span>
@@ -219,17 +216,69 @@
                                 <line x1="12" y1="15" x2="12" y2="3"></line>
                             </svg>
                         </div>
-                        <h4>Download</h4>
-                        <p>Get your optimized images instantly</p>
+                        <h4>Preview & download</h4>
                     </div>
                 </div>
-                <a href="#uploadArea" class="demo-cta">
-                    Try it yourself
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="12" y1="5" x2="12" y2="19"></line>
-                        <polyline points="19 12 12 19 5 12"></polyline>
-                    </svg>
-                </a>
+                <div class="demo-footer">
+                    <p>No account. No limits. No tracking.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section class="features-section">
+            <div class="features-content fade-in-up">
+                <h2>Features</h2>
+                <ul class="features-list">
+                    <li>
+                        <span class="check-icon">✔</span>
+                        Convert to JPG / PNG / WebP / AVIF
+                    </li>
+                    <li>
+                        <span class="check-icon">✔</span>
+                        Resize & compress with live preview
+                    </li>
+                    <li>
+                        <span class="check-icon">✔</span>
+                        Batch-ready (optimize multiple images one by one)
+                    </li>
+                    <li>
+                        <span class="check-icon">✔</span>
+                        Works on mobile & desktop
+                    </li>
+                    <li>
+                        <span class="check-icon">✔</span>
+                        Built with performance & privacy first
+                    </li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Audience Section -->
+        <section class="audience-section-new">
+            <div class="audience-header fade-in-up">
+                <h2>Who It’s For</h2>
+            </div>
+            <div class="audience-grid fade-in-up">
+                <div class="audience-card">
+                    <h4>Web developers</h4>
+                    <p>optimizing Core Web Vitals</p>
+                </div>
+                <div class="audience-card">
+                    <h4>Designers</h4>
+                    <p>exporting assets</p>
+                </div>
+                <div class="audience-card">
+                    <h4>Bloggers & creators</h4>
+                    <p>improving page speed</p>
+                </div>
+                <div class="audience-card">
+                    <h4>Teams</h4>
+                    <p>handling confidential images</p>
+                </div>
+            </div>
+            <div class="audience-footer fade-in-up">
+                <p class="final-statement">If privacy matters, this tool beats cloud compressors — every time.</p>
             </div>
         </section>
 
@@ -370,96 +419,23 @@
             </section>
         </main>
 
-        <!-- Trust Section -->
+        <!-- Trust Section (Active Beta) -->
         <section class="trust-section">
-            <div class="trust-header fade-in-up">
-                <h2>Trusted by Thousands</h2>
-                <p>Join the growing community of users optimizing their images</p>
-            </div>
-
-            <!-- Stats -->
-            <div class="stats-grid fade-in-up">
-                <div class="stat-counter">
-                    <span class="count">5000+</span>
-                    <span class="stat-label">Daily Users</span>
-                </div>
-                <div class="stat-counter">
-                    <span class="count">10,000,000+</span>
-                    <span class="stat-label">Images Optimized</span>
-                </div>
-                <div class="stat-counter">
-                    <span class="count">95%</span>
-                    <span class="stat-label">Avg. Size Reduction</span>
+            <div class="active-beta-container fade-in-up">
+                <h2>Currently in active beta — used by early adopters and developers worldwide.</h2>
+                <p>We’re improving based on real user feedback.</p>
+                <div class="feedback-action">
+                    <a href="mailto:nomijoiya84@gmail.com?subject=Image%20Optimizer%20Feedback&body=Hi,%20I%20want%20to%20share%20some%20feedback%20about%20your%20tool..."
+                        class="btn btn-secondary-outline">Share Feedback</a>
                 </div>
             </div>
+        </section>
 
-            <!-- Testimonials -->
-            <div class="testimonials-container fade-in-up">
-                <div class="testimonials-grid">
-                    <div class="testimonial-card">
-                        <p class="testimonial-quote">Finally, an image optimizer that respects my privacy! I use it
-                            daily for my blog and the compression quality is amazing.</p>
-                        <div class="testimonial-author">
-                            <div class="author-avatar">SJ</div>
-                            <div class="author-info">
-                                <h4>Sarah Johnson</h4>
-                                <p>Travel Blogger</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="testimonial-card">
-                        <p class="testimonial-quote">As a web developer, page speed is crucial. This tool helped me
-                            reduce image sizes by 80% without any noticeable quality loss.</p>
-                        <div class="testimonial-author">
-                            <div class="author-avatar">MC</div>
-                            <div class="author-info">
-                                <h4>Mike Chen</h4>
-                                <p>Frontend Developer</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="testimonial-card">
-                        <p class="testimonial-quote">Love that it works offline! Perfect for batch processing product
-                            photos for my online store.</p>
-                        <div class="testimonial-author">
-                            <div class="author-avatar">EP</div>
-                            <div class="author-info">
-                                <h4>Emma Patterson</h4>
-                                <p>E-commerce Owner</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Integration Badges -->
-            <div class="integration-badges fade-in-up">
-                <div class="integration-badge">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                    </svg>
-                    <span>Works Offline</span>
-                </div>
-                <div class="integration-badge">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
-                    </svg>
-                    <span>WASM Powered</span>
-                </div>
-                <div class="integration-badge">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
-                        <line x1="12" y1="18" x2="12.01" y2="18"></line>
-                    </svg>
-                    <span>PWA Ready</span>
-                </div>
-                <div class="integration-badge">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <polyline points="12 6 12 12 16 14"></polyline>
-                    </svg>
-                    <span>No Rate Limits</span>
-                </div>
+        <!-- Final CTA Section -->
+        <section class="final-cta-section fade-in-up">
+            <div class="cta-content">
+                <h2>Ready to optimize your images privately?</h2>
+                <a href="#uploadArea" class="btn btn-primary btn-large">Start compressing now →</a>
             </div>
         </section>
 

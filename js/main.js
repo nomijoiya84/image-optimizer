@@ -198,7 +198,7 @@ async function startOptimization() {
                 // Use per-file format if explicitly set (not 'auto'), otherwise use global selectedFormat
                 const perFileFormat = fileSettings[i]?.format;
                 const effectiveFormat = (perFileFormat && perFileFormat !== 'auto') ? perFileFormat : selectedFormat;
-                const format = resolveOutputFormat(effectiveFormat, features);
+                const format = resolveOutputFormat(effectiveFormat, features, file.type);
 
                 if (useTargetSize) {
                     await optimizeToTargetSize(file, url, i, targetSizeBytes, maxW, maxH, format);
@@ -302,7 +302,7 @@ async function retryOptimization(index) {
     const url = createPointerUrl(file);
     try {
         const features = imageFeatureCache[index];
-        const format = resolveOutputFormat(selectedFormat, features);
+        const format = resolveOutputFormat(selectedFormat, features, file.type);
 
         if (useTargetSize) {
             await optimizeToTargetSize(file, url, index, targetSizeBytes, maxW, maxH, format);

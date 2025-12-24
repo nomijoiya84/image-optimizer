@@ -69,20 +69,20 @@ self.onmessage = async (e) => {
                         await warmup();
                         isWarmedUp = true;
                         console.log(`[Worker] WASM preload complete in ${(performance.now() - startTime).toFixed(0)}ms`);
+                        self.postMessage({ type: 'warmupComplete' });
                     } catch (err) {
                         console.warn('[Worker] WASM preload failed (will use native fallbacks):', err);
                         isWarmedUp = true; // Mark as done even on failure
                     }
                 })();
             }
-            await wasmWarmupPromise;
-            console.log('[Worker] Warmup complete, WASM modules loaded');
-            // Signal to main thread that warmup is complete
-            self.postMessage({ type: 'warmupComplete' });
+            // CRITICAL FIX: Do NOT await wasmWarmupPromise here.
+            // This allows the worker to process subsequent 'optimize' messages immediately.
         }
     } catch (error) {
         console.error('Worker optimization error:', error);
-        self.postMessage({ id, success: false, error: error.message || 'Unknown error in worker' });
+        const errorMsg = (error instanceof Error) ? error.message : (typeof error === 'string' ? error : 'Unknown worker error');
+        self.postMessage({ id, success: false, error: errorMsg });
     }
 };
 
@@ -133,8 +133,8 @@ async function processWithSettings(file, { quality, maxW, maxH, format }) {
  * Fast optimization to reach target size with Binary Search & Smart Resizing
  */
 async function processToTargetSize(file, { targetSize, maxW, maxH, format }) {
-    const timerId = `processToTargetSize_${timerIdCounter++}`;
-    console.time(timerId);
+    // Replace console.time with performance.now to avoid "Timer already exists" warnings
+    const startTime = performance.now();
     const imgBitmap = await createImageBitmap(file);
 
     try {
@@ -288,7 +288,7 @@ async function processToTargetSize(file, { targetSize, maxW, maxH, format }) {
             previewBlob = await generatePreview(currentCanvas);
         }
 
-        try { console.timeEnd(timerId); } catch (e) { /* */ }
+        console.log(`[Worker] Process finished in ${(performance.now() - startTime).toFixed(0)}ms`);
         return { ...finalRes, previewBlob };
 
     } finally {
