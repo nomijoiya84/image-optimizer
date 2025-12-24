@@ -115,18 +115,22 @@ export async function initializeFormatSupport() {
     });
 
     // Check for native AVIF Decoding support (distinct from Encoding)
-    // Many browsers (Chrome, Edge, Firefox) support displaying AVIF even if they can't encode it via Canvas
     try {
-        const avifData = 'data:image/avif;base64,AAAAIGZ0eXBhdmlmAAAAAG1pZjFtaWFmTWExMwgAAAAAM21ldGEAAAAAAAAAIWhkbHIAAAAAAAAAAHBpY3QAAAAAAAAAAAAAAAAAAAAVDaXRlbQAAAAAAAAABgWlbmYAAAAA5aWxvYwAAAAAAAAAB8AAAAAgAAAAAAADgZmluZmUAAAAAAAABAQAAABhhdjAxQ29sb3IAAAAAAAABAAAACWlQURPwAAAFZG1kYXQBAAAADAYIkoKQAiDiAA==';
-        const img = new Image();
-        const decodingPromise = new Promise((resolve) => {
-            img.onload = () => resolve(true);
-            img.onerror = () => resolve(false);
-            img.src = avifData;
-        });
-        // Timeout after 150ms to strictly avoid blocking startup
+        // Use a Blob + createImageBitmap to avoid 'img.src' triggering net::ERR_INVALID_URL console errors
+        const avifBase64 = 'AAAAIGZ0eXBhdmlmAAAAAG1pZjFtaWFmTWExMwgAAAAAM21ldGEAAAAAAAAAIWhkbHIAAAAAAAAAAHBpY3QAAAAAAAAAAAAAAAAAAAAVDaXRlbQAAAAAAAAABgWlbmYAAAAA5aWxvYwAAAAAAAAAB8AAAAAgAAAAAAADgZmluZmUAAAAAAAABAQAAABhhdjAxQ29sb3IAAAAAAAABAAAACWlQURPwAAAFZG1kYXQBAAAADAYIkoKQAiDiAA==';
+        const binStr = atob(avifBase64);
+        const len = binStr.length;
+        const bytes = new Uint8Array(len);
+        for (let i = 0; i < len; i++) {
+            bytes[i] = binStr.charCodeAt(i);
+        }
+        const avifBlob = new Blob([bytes], { type: 'image/avif' });
+
+        // Timeout after 150ms
         const timeoutPromise = new Promise(r => setTimeout(() => r(false), 150));
-        newSupportMap.native_avif_decoding = await Promise.race([decodingPromise, timeoutPromise]);
+        const bitmapPromise = createImageBitmap(avifBlob).then(() => true).catch(() => false);
+
+        newSupportMap.native_avif_decoding = await Promise.race([bitmapPromise, timeoutPromise]);
     } catch (e) {
         newSupportMap.native_avif_decoding = false;
     }
