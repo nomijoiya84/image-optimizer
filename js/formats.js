@@ -41,7 +41,7 @@ export function isBrowserDisplaySupported(format) {
     if (format === 'jxl') return false; // Native JXL display is rare
     if (format === 'avif') {
         // Only return true if the browser has native AVIF support detection
-        return !!formatSupportMap['native_avif'];
+        return !!formatSupportMap['native_avif_decoding'];
     }
     return true; // JPEG, PNG, WebP are safe
 }
@@ -111,9 +111,25 @@ export async function initializeFormatSupport() {
             }
         }
 
-        // Ensure we don't blindly enable if we know it needs specific features we lack
         newSupportMap[format] = true;
     });
+
+    // Check for native AVIF Decoding support (distinct from Encoding)
+    // Many browsers (Chrome, Edge, Firefox) support displaying AVIF even if they can't encode it via Canvas
+    try {
+        const avifData = 'data:image/avif;base64,AAAAIGZ0eXBhdmlmAAAAAG1pZjFtaWFmTWExMwgAAAAAM21ldGEAAAAAAAAAIWhkbHIAAAAAAAAAAHBpY3QAAAAAAAAAAAAAAAAAAAAVDaXRlbQAAAAAAAAABgWlbmYAAAAA5aWxvYwAAAAAAAAAB8AAAAAgAAAAAAADgZmluZmUAAAAAAAABAQAAABhhdjAxQ29sb3IAAAAAAAABAAAACWlQURPwAAAFZG1kYXQBAAAADAYIkoKQAiDiAA==';
+        const img = new Image();
+        const decodingPromise = new Promise((resolve) => {
+            img.onload = () => resolve(true);
+            img.onerror = () => resolve(false);
+            img.src = avifData;
+        });
+        // Timeout after 150ms to strictly avoid blocking startup
+        const timeoutPromise = new Promise(r => setTimeout(() => r(false), 150));
+        newSupportMap.native_avif_decoding = await Promise.race([decodingPromise, timeoutPromise]);
+    } catch (e) {
+        newSupportMap.native_avif_decoding = false;
+    }
 
     setFormatSupportMap(newSupportMap);
     applyAdvancedFormatConstraints();

@@ -328,12 +328,12 @@ async function generatePreview(canvas) {
     const maxPreviewDim = 800;
     if (canvas.width <= maxPreviewDim && canvas.height <= maxPreviewDim) {
         // Canvas is small enough, use directly
-        return await canvas.convertToBlob({ type: 'image/webp', quality: 0.5 });
+        return await canvas.convertToBlob({ type: 'image/webp', quality: 0.8 });
     }
 
     const scale = maxPreviewDim / Math.max(canvas.width, canvas.height);
     const previewCanvas = resizeImage(canvas, Math.round(canvas.width * scale), Math.round(canvas.height * scale));
-    return await previewCanvas.convertToBlob({ type: 'image/webp', quality: 0.5 });
+    return await previewCanvas.convertToBlob({ type: 'image/webp', quality: 0.8 });
 }
 
 async function encodeCanvasWithFallback(canvas, preferredFormat, quality) {

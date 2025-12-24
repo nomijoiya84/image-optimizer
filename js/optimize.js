@@ -5,6 +5,7 @@
 
 import { optimizedImages, optimizedPreviews, uploadedFiles } from './state.js';
 import { createPointerUrl, safeRevokeUrl } from './utils.js';
+import { isBrowserDisplaySupported } from './formats.js';
 
 // Worker Pool State
 let workers = [];
@@ -199,8 +200,11 @@ function finalizeOptimization(index, file, originalUrl, result) {
     const mainBlob = result.blob;
     let previewUrl;
 
-    // Use previewBlob if provided (for JXL etc) or if not displayable
-    if (result.previewBlob && !result.isDisplayable) {
+    // Use previewBlob if provided AND main format is not displayable (e.g. JXL)
+    // For AVIF, we check browser capability dynamically
+    const canDisplayMain = isBrowserDisplaySupported(result.formatUsed);
+
+    if (result.previewBlob && !canDisplayMain) {
         previewUrl = createPointerUrl(result.previewBlob);
     } else {
         previewUrl = createPointerUrl(mainBlob);
