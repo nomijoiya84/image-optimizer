@@ -1,4 +1,4 @@
-const CACHE_NAME = 'image-optimizer-v17';
+const CACHE_NAME = 'image-optimizer-v18';
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
@@ -15,10 +15,28 @@ const ASSETS_TO_CACHE = [
     './js/upload.js',
     './js/comparison.js',
     './js/worker-fast.js',
-    // WASM Encoder wrappers
+
+    // WASM Encoder Core + Dependencies
     './js/vendor/jsquash-avif/encode.js',
+    './js/vendor/jsquash-avif/meta.js',
+    './js/vendor/jsquash-avif/utils.js',
+    './js/vendor/jsquash-avif/codec/enc/avif_enc.js',
+    './js/vendor/jsquash-avif/codec/enc/avif_enc.wasm',
+    './js/vendor/jsquash-avif/codec/enc/avif_enc_mt.js',
+    './js/vendor/jsquash-avif/codec/enc/avif_enc_mt.wasm',
+
     './js/vendor/jsquash-jxl/encode.js',
+    './js/vendor/jsquash-jxl/meta.js',
+    './js/vendor/jsquash-jxl/utils.js',
+    './js/vendor/jsquash-jxl/codec/enc/jxl_enc.js',
+    './js/vendor/jsquash-jxl/codec/enc/jxl_enc.wasm',
+    './js/vendor/jsquash-jxl/codec/enc/jxl_enc_mt.js',
+    './js/vendor/jsquash-jxl/codec/enc/jxl_enc_mt.wasm',
+    './js/vendor/jsquash-jxl/codec/enc/jxl_enc_mt_simd.js',
+    './js/vendor/jsquash-jxl/codec/enc/jxl_enc_mt_simd.wasm',
+
     './js/vendor/wasm-feature-detect/dist/esm/index.js',
+
     './animations-enhancement.css',
     './hero-styles.css',
     './progress-modal.css',

@@ -32,7 +32,7 @@ const capabilitiesPromise = (async () => {
 
         // Detect SIMD
         try {
-            const { simd } = await import('./vendor/wasm-feature-detect/dist/esm/index.js');
+            const { simd } = await import('/js/vendor/wasm-feature-detect/dist/esm/index.js');
             detectedCapabilities.simd = await simd();
         } catch (e) {
             // If module import fails, try a simple manual check or default to false
@@ -225,7 +225,8 @@ async function processToTargetSize(file, { targetSize, maxW, maxH, format }) {
             } else {
                 // Too big
                 if (!supportsQuality(format)) {
-                    console.log(`[Worker] ${format} is mostly fixed/lossless. Skipping loop.`);
+                    console.log(`[Worker] ${format} is mostly fixed/lossless at current resolution. Skipping binary search passes.`);
+                    // Set maxQ = minQ to force convergence and trigger resize if needed
                     maxQ = minQ;
                 } else {
                     maxQ = currentQ;

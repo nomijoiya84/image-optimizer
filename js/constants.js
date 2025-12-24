@@ -16,8 +16,8 @@ export const FORMAT_PRIORITY_ORDER = ['webp', 'jpeg', 'png', 'avif', 'jxl'];
 
 // WASM Sources (Points to the main encode.js wrapper)
 export const WASM_CODEC_SOURCES = {
-    avif: './vendor/jsquash-avif/encode.js',
-    jxl: './vendor/jsquash-jxl/encode.js'
+    avif: '/js/vendor/jsquash-avif/encode.js',
+    jxl: '/js/vendor/jsquash-jxl/encode.js'
 };
 
 export const DEFAULT_QUALITY = 0.8;

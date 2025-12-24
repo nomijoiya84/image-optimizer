@@ -50,20 +50,25 @@ function ensureWorkerReady(minCount = 0) {
     // Dynamic expansion
     if (workers.length < targetSize) {
         console.log(`[Main] Expanding worker pool from ${workers.length} to ${targetSize}...`);
-        for (let i = workers.length; i < targetSize; i++) {
-            const w = new Worker('js/worker-fast.js?v=2.3', { type: 'module' });
+        const startIndex = workers.length;
+
+        for (let i = startIndex; i < targetSize; i++) {
+            const w = new Worker('/js/worker-fast.js?v=2.3', { type: 'module' });
             w.addEventListener('message', (e) => handleWorkerMessage(e, w));
             w.addEventListener('error', (e) => handleWorkerError(e, w));
             workers.push(w);
         }
 
-        // Dedicated warmup for the FIRST worker only (if not already done)
-        if (workers.length > 0 && !workers[0].hasWarmupTriggered) {
-            workers[0].hasWarmupTriggered = true;
-            setTimeout(() => {
-                console.log('[Main] Starting background WASM warmup for primary worker...');
-                workers[0].postMessage({ type: 'warmup' });
-            }, 500);
+        // Dedicated warmup for the FIRST few workers (up to 4) to ensure rapid batch start
+        const warmupCount = Math.min(workers.length, 4);
+        for (let i = 0; i < warmupCount; i++) {
+            if (!workers[i].hasWarmupTriggered) {
+                workers[i].hasWarmupTriggered = true;
+                setTimeout(() => {
+                    console.log(`[Main] Starting background WASM warmup for worker ${i}...`);
+                    workers[i].postMessage({ type: 'warmup' });
+                }, 100 * (i + 1));
+            }
         }
     }
     return Promise.resolve();
@@ -123,7 +128,7 @@ function handleWorkerError(e, workerInstance) {
         const failedIndex = workers.indexOf(workerInstance);
         if (failedIndex !== -1) {
             workerInstance.terminate();
-            const newWorker = new Worker('js/worker-fast.js?v=2.3', { type: 'module' });
+            const newWorker = new Worker('/js/worker-fast.js?v=2.3', { type: 'module' });
             newWorker.addEventListener('message', (e) => handleWorkerMessage(e, newWorker));
             newWorker.addEventListener('error', (e) => handleWorkerError(e, newWorker));
             workers[failedIndex] = newWorker;

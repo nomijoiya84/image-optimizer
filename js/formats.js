@@ -71,7 +71,7 @@ export async function initializeFormatSupport() {
 
     // Check for WASM SIMD support if available
     try {
-        const { simd } = await import('./vendor/wasm-feature-detect/dist/esm/index.js');
+        const { simd } = await import('/js/vendor/wasm-feature-detect/dist/esm/index.js');
         wasmSimdSupported = await simd();
         console.log(`WASM SIMD Support: ${wasmSimdSupported ? 'Yes' : 'No'}`);
         // Store SIMD status in support map for workers to access
