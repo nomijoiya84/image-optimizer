@@ -187,3 +187,76 @@ body {
 }
 
 /* Removed conflicting hover effects that are now handled in styles.css */
+
+/* Mobile Animation Optimization */
+@media (max-width: 480px) {
+
+    /* Reduce animation complexity on small screens for performance */
+    .result-card {
+        animation-duration: 0.4s;
+    }
+
+    .upload-container,
+    .controls-panel {
+        animation-duration: 0.4s;
+    }
+
+    @keyframes staggerFadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(15px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes cardEntrance {
+        from {
+            opacity: 0;
+            transform: translateY(20px) scale(0.95);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+}
+
+/* Reduced Motion Preference - Accessibility */
+@media (prefers-reduced-motion: reduce) {
+    body {
+        animation: none;
+    }
+
+    .result-card,
+    .upload-container,
+    .controls-panel {
+        animation: none;
+        opacity: 1;
+        transform: none;
+    }
+
+    .compression-badge {
+        animation: none;
+    }
+
+    .loading {
+        animation: none;
+    }
+
+    .logo:hover .logo-icon-wrapper {
+        animation: none;
+    }
+
+    .success-notification {
+        animation: none;
+    }
+
+    .stat-value {
+        animation: none;
+    }
+}

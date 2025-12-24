@@ -113,3 +113,52 @@ body.dark-mode .progress-overlay {
 body.dark-mode .progress-card {
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8);
 }
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+    .progress-card {
+        padding: 2rem 1.5rem;
+        max-width: 90%;
+    }
+
+    .progress-ring-container {
+        width: 120px;
+        height: 120px;
+        margin-bottom: 1.5rem;
+    }
+
+    .progress-percentage {
+        font-size: 1.75rem;
+    }
+
+    .progress-title {
+        font-size: 1.25rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .progress-card {
+        padding: 1.5rem 1rem;
+        max-width: 95%;
+        width: calc(100% - 2rem);
+    }
+
+    .progress-ring-container {
+        width: 100px;
+        height: 100px;
+        margin-bottom: 1.25rem;
+    }
+
+    .progress-percentage {
+        font-size: 1.5rem;
+    }
+
+    .progress-title {
+        font-size: 1.1rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .progress-status {
+        font-size: 0.85rem;
+    }
+}

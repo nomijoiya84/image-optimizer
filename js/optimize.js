@@ -63,7 +63,7 @@ function ensureWorkerReady(minCount = 0) {
             setTimeout(() => {
                 console.log('[Main] Starting background WASM warmup for primary worker...');
                 workers[0].postMessage({ type: 'warmup' });
-            }, 3000);
+            }, 500);
         }
     }
     return Promise.resolve();

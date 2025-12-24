@@ -895,8 +895,56 @@ body.light-mode .initial-stats {
 }
 
 @media (max-width: 480px) {
+
+    /* Header mobile optimization - icon-only theme toggle */
+    .header-content {
+        flex-wrap: nowrap;
+        gap: 0.5rem;
+    }
+
+    #themeToggle .btn-text {
+        display: none;
+    }
+
+    #themeToggle {
+        padding: 0.75rem;
+        min-width: 44px;
+        min-height: 44px;
+    }
+
+    #themeToggle::before {
+        content: '🌙';
+        font-size: 1.2rem;
+    }
+
+    body.dark-mode #themeToggle::before {
+        content: '☀️';
+    }
+
+    .logo-icon-wrapper {
+        width: 36px;
+        height: 36px;
+    }
+
+    .main-header h1 {
+        font-size: 1.1rem;
+    }
+
+    .tagline {
+        font-size: 0.7rem;
+        display: none;
+    }
+
+    /* Hero mobile optimization */
     .hero-title {
-        font-size: 1.75rem;
+        font-size: 1.5rem;
+        line-height: 1.2;
+        padding: 0 0.5rem;
+    }
+
+    .hero-subtitle {
+        font-size: 1rem;
+        padding: 0 0.5rem;
     }
 
     .upload-area {
@@ -922,14 +970,15 @@ body.light-mode .initial-stats {
         gap: 1.5rem;
     }
 
+    /* Touch-friendly slider thumbs */
     .slider::-webkit-slider-thumb {
-        width: 28px;
-        height: 28px;
+        width: 32px;
+        height: 32px;
     }
 
     .slider::-moz-range-thumb {
-        width: 28px;
-        height: 28px;
+        width: 32px;
+        height: 32px;
     }
 
     .btn-optimize {
@@ -969,11 +1018,12 @@ body.light-mode .initial-stats {
         margin-bottom: 0;
     }
 
+    /* Larger touch targets for comparison */
     .comparison-handle {
-        width: 44px;
-        height: 44px;
-        margin-left: -22px;
-        margin-top: -22px;
+        width: 48px;
+        height: 48px;
+        margin-left: -24px;
+        margin-top: -24px;
     }
 
     .comparison-handle-icon {
@@ -994,6 +1044,24 @@ body.light-mode .initial-stats {
 
     .zoom-toggle-btn svg {
         margin: 0;
+    }
+
+    /* Batch tools mobile */
+    .batch-tools-header {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+    }
+
+    .batch-tool-actions {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .batch-tool-actions .btn {
+        flex: 1;
+        padding: 0.75rem 1rem;
+        font-size: 0.85rem;
     }
 }
 

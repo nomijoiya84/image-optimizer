@@ -71,7 +71,7 @@ export async function initializeFormatSupport() {
 
     // Check for WASM SIMD support if available
     try {
-        const { simd } = await import('wasm-feature-detect');
+        const { simd } = await import('./vendor/wasm-feature-detect/dist/esm/index.js');
         wasmSimdSupported = await simd();
         console.log(`WASM SIMD Support: ${wasmSimdSupported ? 'Yes' : 'No'}`);
         // Store SIMD status in support map for workers to access
@@ -302,20 +302,29 @@ async function isAnimatedImage(file) {
     let isAnimated = false;
 
     // Basic MIME check
-    if (file.type === 'image/gif' || file.type === 'image/webp' || file.type === 'image/apng') {
-        // For WebP/APNG we might need deeper check, but for now trust type or assume true for GIF
-        if (file.type === 'image/gif') {
-            isAnimated = true;
-        } else if (file.type === 'image/webp') {
-            // Deep check for WebP animation (looks for 'ANIM' chunk)
-            try {
-                const buffer = await file.slice(0, 100).arrayBuffer();
-                const arr = new Uint8Array(buffer);
-                const str = Array.from(arr).map(b => String.fromCharCode(b)).join('');
-                isAnimated = str.includes('ANIM');
-            } catch (e) {
-                console.warn('Failed to check WebP animation', e);
-            }
+    if (file.type === 'image/gif') {
+        // GIF is always assumed animated (most are)
+        isAnimated = true;
+    } else if (file.type === 'image/webp') {
+        // Deep check for WebP animation (looks for 'ANIM' chunk)
+        try {
+            const buffer = await file.slice(0, 100).arrayBuffer();
+            const arr = new Uint8Array(buffer);
+            const str = Array.from(arr).map(b => String.fromCharCode(b)).join('');
+            isAnimated = str.includes('ANIM');
+        } catch (e) {
+            console.warn('Failed to check WebP animation', e);
+        }
+    } else if (file.type === 'image/png' || file.type === 'image/apng') {
+        // Check for APNG animation by looking for 'acTL' chunk (animation control)
+        try {
+            const buffer = await file.slice(0, 200).arrayBuffer();
+            const arr = new Uint8Array(buffer);
+            const str = Array.from(arr).map(b => String.fromCharCode(b)).join('');
+            // APNG has 'acTL' chunk for animation control
+            isAnimated = str.includes('acTL');
+        } catch (e) {
+            console.warn('Failed to check APNG animation', e);
         }
     }
 

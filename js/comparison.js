@@ -86,16 +86,24 @@ export function openComparison(index) {
     if (statSaved) statSaved.textContent = calculateSavings(file.size, optimizedBlob.size);
 
     // Reset slider to middle
-    slider.value = 50;
+    if (slider) {
+        slider.value = 50;
+    }
     // Clip Left 50% of Optimized, so Original shows on Left
-    optimizedImg.style.clipPath = 'inset(0 0 0 50%)';
-    handle.style.left = '50%';
+    if (optimizedImg) {
+        optimizedImg.style.clipPath = 'inset(0 0 0 50%)';
+    }
+    if (handle) {
+        handle.style.left = '50%';
+    }
 
     // Wait for images to load before showing to prevent layout shift/empty modal
     let loadedCount = 0;
+    let modalShown = false;
     const checkLoaded = () => {
         loadedCount++;
-        if (loadedCount === 2) {
+        if (loadedCount === 2 && !modalShown) {
+            modalShown = true;
             comparisonModal.style.display = 'flex';
             comparisonModal.classList.remove('is-loading');
             document.body.style.overflow = 'hidden'; // Prevent background scroll
@@ -109,6 +117,16 @@ export function openComparison(index) {
     // Fallback if images are already cached or fail
     originalImg.onerror = checkLoaded;
     optimizedImg.onerror = checkLoaded;
+
+    // Timeout fallback: show modal after 3 seconds even if images haven't loaded
+    setTimeout(() => {
+        if (!modalShown) {
+            modalShown = true;
+            comparisonModal.style.display = 'flex';
+            comparisonModal.classList.remove('is-loading');
+            document.body.style.overflow = 'hidden';
+        }
+    }, 3000);
 
     // Set SRCS
     currentOriginalUrl = createPointerUrl(file);

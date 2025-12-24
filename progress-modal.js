@@ -30,7 +30,8 @@ function updateProgress(current, total) {
     if (current >= total) {
         progressStatus.textContent = 'Complete!';
     } else {
-        progressStatus.textContent = `Optimizing image ${current + 1} of ${total}...`;
+        // Show current+1 since 'current' represents completed count, not the one being processed
+        progressStatus.textContent = `Processing image ${Math.min(current + 1, total)} of ${total}...`;
     }
 
     // Animate SVG ring

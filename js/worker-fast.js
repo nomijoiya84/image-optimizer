@@ -16,13 +16,34 @@ const wasmCodecCache = {};
 let wasmWarmupPromise = null;
 let isWarmedUp = false;
 let warmupStarted = false;
+let detectedCapabilities = { simd: false, threads: false };
 
-// Unique ID counter for timer management (prevents timer collision warnings)
+// Unique ID counter for timer management
 let timerIdCounter = 0;
 
 // Log worker start but DON'T start WASM loading immediately
-// WASM will load lazily when first needed OR when explicitly requested
 console.log('[Worker] Worker started. WASM will load on-demand or when requested.');
+
+// Feature detection
+const capabilitiesPromise = (async () => {
+    try {
+        // Detect Threads (SharedArrayBuffer)
+        detectedCapabilities.threads = typeof SharedArrayBuffer !== 'undefined';
+
+        // Detect SIMD
+        try {
+            const { simd } = await import('./vendor/wasm-feature-detect/dist/esm/index.js');
+            detectedCapabilities.simd = await simd();
+        } catch (e) {
+            // If module import fails, try a simple manual check or default to false
+            detectedCapabilities.simd = WebAssembly.validate(new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0, 1, 5, 1, 96, 0, 1, 123, 3, 2, 1, 0, 10, 10, 1, 8, 0, 253, 15, 253, 98, 11]));
+        }
+
+        console.log(`[Worker] Capabilities detected: SIMD=${detectedCapabilities.simd}, Threads=${detectedCapabilities.threads}`);
+    } catch (e) {
+        console.warn('[Worker] Capability detection error:', e);
+    }
+})();
 
 /**
  * Handle incoming messages from main thread
@@ -156,7 +177,13 @@ async function processToTargetSize(file, { targetSize, maxW, maxH, format }) {
         let result = null;
         let bestResult = null;
         let iterations = 0;
-        const MAX_ATTEMPTS = 15;
+        let resizeCount = 0; // Track resize iterations to prevent infinite loops
+        const MAX_RESIZES = 3;
+
+        // OPTIMIZATION: Reduce max attempts for slow WASM formats (AVIF/JXL)
+        const isWasm = (format === 'avif' || format === 'jxl');
+        const MAX_ATTEMPTS = isWasm ? 6 : 15;
+
         // 3. Optimization Loop
         while (iterations < MAX_ATTEMPTS) {
             iterations++;
@@ -172,19 +199,33 @@ async function processToTargetSize(file, { targetSize, maxW, maxH, format }) {
             // Check success
             if (size <= targetSize) {
                 bestResult = result;
-                // If we are close enough (within 10% of target or maxQ reached), stop
-                // Or if we are already at high quality
-                if (size > targetSize * 0.9 || currentQ >= maxQ - 0.05) {
+
+                // Success Condition:
+                // 1. Close enough (within 15% of target)
+                // 2. High quality already (maxQ close to top)
+                // 3. WASM "Good Enough" check (avoid re-encoding if we are reasonably close to save time)
+
+                const ratio = size / targetSize;
+                const isAcceptable = ratio > 0.85; // If we are at 85% of target, that's good filling
+
+                if (isAcceptable || currentQ >= maxQ - 0.05) {
+                    console.log(`[Worker] Target met early. Size: ${size}, Target: ${targetSize}`);
                     break;
                 }
-                // Can we go higher?
+
+                // If we are REALLY small (like 50% of target), we SHOULD try to increase quality
+                // EXCEPT for WASM where every pass costs ~1-2 seconds.
+                if (isWasm && iterations >= 2 && ratio > 0.7) {
+                    console.log(`[Worker] WASM optimization: Accepting 70%+ fill after 2 passes to save time.`);
+                    break;
+                }
+
+                // Try higher
                 minQ = currentQ;
             } else {
                 // Too big
                 if (!supportsQuality(format)) {
-                    // Lossless format: Quality adjustments are futile.
-                    // Force convergence to trigger resize immediately.
-                    console.log(`[Worker] ${format} is lossless/fixed. Skipping quality loop.`);
+                    console.log(`[Worker] ${format} is mostly fixed/lossless. Skipping loop.`);
                     maxQ = minQ;
                 } else {
                     maxQ = currentQ;
@@ -192,56 +233,61 @@ async function processToTargetSize(file, { targetSize, maxW, maxH, format }) {
             }
 
             // Next Move logic
-            if (maxQ - minQ < 0.05) {
-                // Quality range exhausted (converged)
-                // If we found a valid result, great.
+            if (maxQ - minQ < 0.04) {
+                // Converged
                 if (bestResult) {
                     result = bestResult;
                     break;
                 }
+                // If no best result (always > target), force resize logic below
+                console.log('[Worker] Converged but still too big. Resizing.');
 
-                // If we are here, even MIN_QUALITY is too big.
-                // WE MUST RESIZE.
-                console.log('[Worker] Quality floor hit, triggering resize.');
-
-                // Calculate resize scale needed
+                // Smart Resize Calc
                 const ratio = targetSize / size;
-                const scale = Math.sqrt(ratio) * 0.95; // 0.95 safety factor
-
+                const scale = Math.sqrt(ratio) * 0.95;
                 currentW = Math.max(100, Math.floor(currentW * scale));
                 currentH = Math.max(100, Math.floor(currentH * scale));
 
-                // Update canvas
-                const nextCanvas = resizeImage(currentCanvas, currentW, currentH);
-                currentCanvas = nextCanvas; // Old one GC'd?
+                currentCanvas = resizeImage(currentCanvas, currentW, currentH);
 
-                // Reset quality search for new size
-                // We can be optimistic again now that we are smaller
+                // Reset Search
                 minQ = MIN_QUALITY;
                 maxQ = 0.92;
                 currentQ = 0.75;
 
-                // Reset binary search bounds? 
-                // Actually, let's just make valid bounds.
+                // Reset iterations budget
+                iterations = 0;
+                resizeCount++;
+
+                // Prevent infinite resize loop
+                if (resizeCount >= MAX_RESIZES) {
+                    console.log('[Worker] Max resize iterations reached. Returning best result.');
+                    break;
+                }
+
                 continue;
             }
+
 
             // Binary search step
             currentQ = (minQ + maxQ) / 2;
         }
 
-        // If after all attempts we have no valid result (unlikely with resize), return the last one
-        // (It might be slightly over target if extreme edge case, handled by UI warning or acceptor)
+        // If after all attempts we have no valid result, return the last one
         const finalRes = bestResult || result;
 
+        // Guard against null result (all encoding attempts failed)
+        if (!finalRes || !finalRes.blob) {
+            throw new Error('All encoding attempts failed - no valid result produced');
+        }
+
         // Optimization: Only generate preview if the main format is NOT natively displayable
-        // (For displayable formats like JPEG/PNG, the UI uses the main blob directly)
         let previewBlob = null;
         if (!finalRes.isDisplayable) {
             previewBlob = await generatePreview(currentCanvas);
         }
 
-        try { console.timeEnd(timerId); } catch (e) { /* Timer already ended or doesn't exist */ }
+        try { console.timeEnd(timerId); } catch (e) { /* */ }
         return { ...finalRes, previewBlob };
 
     } finally {
@@ -271,17 +317,21 @@ function resizeImage(source, maxW, maxH) {
     const canvas = new OffscreenCanvas(width, height);
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = 'medium'; // 'medium' is faster than 'high'
+    ctx.imageSmoothingQuality = 'high'; // 'high' for better quality downscaling
     ctx.drawImage(source, 0, 0, width, height);
     return canvas;
 }
 
 async function generatePreview(canvas) {
-    let previewCanvas = canvas;
-    if (canvas.width > 800 || canvas.height > 800) {
-        const scale = Math.min(1, 800 / Math.max(canvas.width, canvas.height));
-        previewCanvas = resizeImage(canvas, canvas.width * scale, canvas.height * scale);
+    // Only resize if canvas is larger than preview size
+    const maxPreviewDim = 800;
+    if (canvas.width <= maxPreviewDim && canvas.height <= maxPreviewDim) {
+        // Canvas is small enough, use directly
+        return await canvas.convertToBlob({ type: 'image/webp', quality: 0.5 });
     }
+
+    const scale = maxPreviewDim / Math.max(canvas.width, canvas.height);
+    const previewCanvas = resizeImage(canvas, Math.round(canvas.width * scale), Math.round(canvas.height * scale));
     return await previewCanvas.convertToBlob({ type: 'image/webp', quality: 0.5 });
 }
 
@@ -382,24 +432,25 @@ async function loadWasmCodec(format) {
     if (!wasmCodecCache[format]) {
         wasmCodecCache[format] = (async () => {
             try {
-                const mod = await import(WASM_CODEC_SOURCES[format]);
-                // console.log(`[Worker] Loaded module for ${format}. Keys: ${Object.keys(mod)}`);
+                // Ensure capabilities are checked (for other uses)
+                await capabilitiesPromise;
 
+                const sourceUrl = WASM_CODEC_SOURCES[format];
+                console.log(`[Worker] Loading ${format} codec from: ${sourceUrl}`);
+
+                const mod = await import(sourceUrl);
                 const encodeFn = mod.encode || mod.default;
 
-                // Check if 'init' exists and is a function, AND is not the same as the encode function
-                // (Some builds might accidentally alias them or export them strangely)
-                if (mod.init && typeof mod.init === 'function' && mod.init !== encodeFn) {
+                if (!encodeFn) throw new Error(`Codec ${format} does not export an encode function`);
+
+                // Pre-initialize the module if 'init' is available
+                if (mod.init && typeof mod.init === 'function') {
                     try {
-                        // console.log(`[Worker] Initializing ${format}...`);
                         await mod.init();
-                        // console.log(`[Worker] Initialized ${format}.`);
                     } catch (e) {
-                        // If it fails with the specific data error, it was likely the encode function after all
-                        if (e.message && e.message.includes("reading 'data'")) {
-                            console.warn(`[Worker] 'init' failed with data error (likely alias to encode). Ignoring.`);
-                        } else {
-                            console.warn(`[Worker] Initialization for ${format} failed (non-critical if module self-inits):`, e);
+                        // Ignore known benign errors during init
+                        if (!e.message?.includes("reading 'data'")) {
+                            console.warn(`[Worker] Initialization for ${format} failed:`, e);
                         }
                     }
                 }
@@ -416,19 +467,20 @@ async function loadWasmCodec(format) {
 
 function buildWasmOptions(format, quality) {
     const normalizedQuality = Math.max(0.05, Math.min(1, quality));
+    const q100 = Math.round(normalizedQuality * 100);
+
     if (format === 'avif') {
-        const cqLevel = Math.round((1 - normalizedQuality) * 45) + 5;
         return {
-            cqLevel,
-            cqAlphaLevel: cqLevel,
-            effort: 1, // Reduced from 3 for much faster encoding (2-5x speedup)
-            subsample: 1
+            quality: q100,
+            qualityAlpha: -1,
+            speed: 8, // Fast encoding (range 0-10, 10 is fastest)
+            subsample: 1 // YUV420
         };
     }
     if (format === 'jxl') {
         return {
-            quality: Math.round(normalizedQuality * 100),
-            effort: 1 // Reduced from 3 for much faster encoding
+            quality: q100,
+            effort: 1 // Fastest encoding (range 1-9, 1 is fastest)
         };
     }
     return {};

@@ -14,6 +14,7 @@ export const FORMAT_DEFINITIONS = {
 // Priority order: WebP first (native, fast), then AVIF/JXL as fallback (WASM, slower)
 export const FORMAT_PRIORITY_ORDER = ['webp', 'jpeg', 'png', 'avif', 'jxl'];
 
+// WASM Sources (Points to the main encode.js wrapper)
 export const WASM_CODEC_SOURCES = {
     avif: './vendor/jsquash-avif/encode.js',
     jxl: './vendor/jsquash-jxl/encode.js'

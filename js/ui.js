@@ -241,7 +241,7 @@ export function updateBatchSummary() {
     }
 
     elements.batchTools.style.display = 'flex';
-    elements.batchCount.textContent = totalProcessed;
+    elements.batchCount.textContent = `${totalProcessed} optimized image${totalProcessed !== 1 ? 's' : ''}`;
     elements.downloadAllBtn.disabled = false;
 
     // Safely calculate - check both file and optimizedImages existence

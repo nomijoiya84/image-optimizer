@@ -1,4 +1,4 @@
-const CACHE_NAME = 'image-optimizer-v13';
+const CACHE_NAME = 'image-optimizer-v17';
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
@@ -15,7 +15,10 @@ const ASSETS_TO_CACHE = [
     './js/upload.js',
     './js/comparison.js',
     './js/worker-fast.js',
-    // worker.js removed (deprecated)
+    // WASM Encoder wrappers
+    './js/vendor/jsquash-avif/encode.js',
+    './js/vendor/jsquash-jxl/encode.js',
+    './js/vendor/wasm-feature-detect/dist/esm/index.js',
     './animations-enhancement.css',
     './hero-styles.css',
     './progress-modal.css',
@@ -24,6 +27,9 @@ const ASSETS_TO_CACHE = [
     './success-modal.js',
     './notifications.css',
     './notifications.js',
+    './benefits-trust.css',
+    './trust-elements.js',
+    './comparison-modal.css',
     './assets/logo.png',
     './assets/hero-graphic.png',
     'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap',

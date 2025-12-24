@@ -223,30 +223,33 @@ async function startOptimization() {
         });
     }
 
-    // Use hardware concurrency for batch processing, matching the worker pool size
-    const concurrency = navigator.hardwareConcurrency || 4;
-    await runWithConcurrency(tasks, concurrency);
+    try {
+        // Use hardware concurrency for batch processing, matching the worker pool size
+        // The worker pool is dynamically sized, so we need to let it size up first
+        const concurrency = Math.min(navigator.hardwareConcurrency || 4, tasks.length, 8);
+        await runWithConcurrency(tasks, concurrency);
 
-    setIsOptimizing(false);
-    elements.optimizeBtn.disabled = false;
-    if (window.hideProgressModal) window.hideProgressModal();
+        if (window.showSuccessModal) {
+            // Safely calculate totals - check both file and optimizedImages existence
+            const originalTotal = uploadedFiles.reduce((acc, f, i) => acc + ((f && optimizedImages[i]) ? f.size : 0), 0);
+            const optimizedTotal = optimizedImages.reduce((acc, blob) => acc + (blob ? blob.size : 0), 0);
 
-    if (window.showSuccessModal) {
-        // Safely calculate totals - check both file and optimizedImages existence
-        const originalTotal = uploadedFiles.reduce((acc, f, i) => acc + ((f && optimizedImages[i]) ? f.size : 0), 0);
-        const optimizedTotal = optimizedImages.reduce((acc, blob) => acc + (blob ? blob.size : 0), 0);
+            // Count only files that have a corresponding optimized image
+            const successCount = uploadedFiles.reduce((acc, f, i) => acc + ((f && optimizedImages[i]) ? 1 : 0), 0);
 
-        // Count only files that have a corresponding optimized image
-        const successCount = uploadedFiles.reduce((acc, f, i) => acc + ((f && optimizedImages[i]) ? 1 : 0), 0);
+            window.showSuccessModal({
+                originalTotal,
+                optimizedTotal,
+                count: successCount
+            });
+        }
 
-        window.showSuccessModal({
-            originalTotal,
-            optimizedTotal,
-            count: successCount
-        });
+        if (window.Toast) window.Toast.success('Batch optimization complete!');
+    } finally {
+        setIsOptimizing(false);
+        elements.optimizeBtn.disabled = false;
+        if (window.hideProgressModal) window.hideProgressModal();
     }
-
-    if (window.Toast) window.Toast.success('Batch optimization complete!');
 }
 
 /**

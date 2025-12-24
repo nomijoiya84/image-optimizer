@@ -139,16 +139,29 @@ export async function runWithConcurrency(tasks, concurrency) {
     const results = [];
     const executing = [];
     for (const task of tasks) {
-        const p = task().then(res => {
-            executing.splice(executing.indexOf(p), 1);
-            return res;
-        });
+        const p = task()
+            .then(res => {
+                executing.splice(executing.indexOf(p), 1);
+                return res;
+            })
+            .catch(err => {
+                // Ensure cleanup happens even on error
+                executing.splice(executing.indexOf(p), 1);
+                throw err; // Re-throw to propagate error
+            });
         results.push(p);
         executing.push(p);
         if (executing.length >= concurrency) {
-            await Promise.race(executing);
+            // Wait for any task to finish (success or failure)
+            await Promise.race(executing).catch(() => { /* handled in results */ });
         }
     }
-    return Promise.all(results);
+    // Use allSettled to not fail fast, then check for errors
+    const settled = await Promise.allSettled(results);
+    const errors = settled.filter(r => r.status === 'rejected');
+    if (errors.length > 0) {
+        console.warn(`[runWithConcurrency] ${errors.length} task(s) failed:`, errors.map(e => e.reason?.message || e.reason));
+    }
+    // Return successful results, let the caller handle individual failures
+    return settled.map(r => r.status === 'fulfilled' ? r.value : null);
 }
-

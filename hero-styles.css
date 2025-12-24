@@ -45,5 +45,46 @@ body.light-mode .hero-img {
 @media (max-width: 768px) {
     .hero-img {
         max-width: 200px;
+        border-radius: 24px;
+    }
+
+    .hero-visual {
+        margin-top: 1.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .hero-img {
+        max-width: 160px;
+        border-radius: 20px;
+    }
+
+    .hero-visual {
+        margin-top: 1rem;
+    }
+
+    /* Reduce animation movement on mobile for performance */
+    @keyframes heroFloat {
+
+        0%,
+        100% {
+            transform: translateY(0) rotateX(2deg);
+        }
+
+        50% {
+            transform: translateY(-10px) rotateX(0deg);
+        }
+    }
+}
+
+/* Reduced motion preference - respect user's accessibility settings */
+@media (prefers-reduced-motion: reduce) {
+    .hero-img {
+        animation: none;
+        transform: none;
+    }
+
+    .hero-img:hover {
+        transform: scale(1.02) !important;
     }
 }
