@@ -9,3 +9,5 @@ dist/
 .idea/
 *.swp
 *.tmp
+*.backup
+test_import.html
